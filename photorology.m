@@ -170,7 +170,7 @@ end
 %AJUSTE GAMMA
 img2 = imadjust(img2,[],[],sliderGamma); 
 
-handles.img2save = img2; %Após o ajuste, criamos uma nova imagem para que possa ser salva
+handles.img2save = img2; %Após o ajuste, criamos uma nova imagem para que possa ser guardada
 axes(handles.axes4);
 imshow(img2);
 axes(handles.axes2);
@@ -219,6 +219,7 @@ function popupFilter_Callback(hObject, eventdata, handles)
 
 handles.filterValue = get(hObject, 'Value');
 disp(handles.filterValue);
+
 guidata(hObject,handles);
 
 
@@ -283,15 +284,51 @@ function pushbuttonApply_Callback(hObject, eventdata, handles)
 switch(handles.filterValue)
     case 1  %nada
 
-    case 2  %filtro de média
-       
-    case 3  %filtro gaussiano
-       
-    case 4  %sobel vertical
-       
-    case 5 %sobel horizontal
+    case 2  %filtro de média não funciona
+        average = fspecial('average'); %cria a matriz de Karnell
+        filtered = imfilter(handles.original, average); %aplica o filtro à imagem original
         
-    case 6 %sobel vertical + horizontal
+        axes(handles.axes4); %manda para o axes da imagem processada
+        imshow(filtered); %mostra a imagem
+        
+        guidata(hObject,handles);
+       
+    case 3  %filtro gaussiano não funciona
+        gaussian = fspecial('gaussian'); %cria a matriz de Karnell
+        filtered = imfilter(handles.original, gaussian);
+        
+        axes(handles.axes4);
+        imshow(filtered);
+        
+        guidata(hObject,handles);   
+        
+    case 4  %sobel vertical
+        karnell = fspecial('sobel'); %cria a matriz de Karnell
+        sobelV = transpose(karnell); %para aplicar o filtro sobel na vertical é necessário transpor a matriz
+        filtered = imfilter(handles.original, sobelV);
+        
+        axes(handles.axes4);
+        imshow(filtered);
+        
+        guidata(hObject,handles);          
+     
+    case 5 %sobel horizontal
+        sobelH = fspecial('sobel'); %cria a matriz de Karnell
+        filtered = imfilter(handles.original, sobelH);
+        
+        axes(handles.axes4);
+        imshow(filtered);
+        
+        guidata(hObject,handles);   
+    
+    case 6 %sobel vertical + horizontal <- isto não tem sentido
         
     case 7 %filtro laplaciano
+        laplacian = fspecial('laplacian'); %cria a matriz de Karnell
+        filtered = imfilter(handles.original, laplacian);
+        
+        axes(handles.axes4);
+        imshow(filtered);
+        
+        guidata(hObject,handles);
 end
