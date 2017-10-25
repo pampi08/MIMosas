@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 22-Oct-2017 14:36:55
+% Last Modified by GUIDE v2.5 25-Oct-2017 14:18:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -193,6 +193,21 @@ set(handles.showGamma, 'String', 1);
 set(handles.showContr, 'String', 0);
 set(handles.showBright, 'String', 0);
 
+%condições iniciais dos filtros
+set(handles.editSize,'Enable', 'off');
+set(handles.editSize, 'Value', 3);
+
+set(handles.editP1,'Enable', 'off');
+set(handles.editP2,'Enable', 'off');
+
+
+function errorSizeMatrix(hObject, eventdata, handles)
+if(handles.size < 1)
+    uiwait(msgbox('The size of the filter must be bigger than 0','Aviso','warn','modal'));
+    set(handles.editSize, 'Value', 3);
+end
+
+
 
 % --- Executes on button press in undoB.
 function undoB_Callback(hObject, eventdata, handles)
@@ -215,10 +230,44 @@ guidata(hObject,handles);
 
 % --- Executes on selection change in popupFilter.
 function popupFilter_Callback(hObject, eventdata, handles)
-%handles=guidata(hObject);
-
 handles.filterValue = get(hObject, 'Value');
 disp(handles.filterValue);
+
+switch(handles.filterValue)
+    case 2 %media
+        setConditions(hObject, eventdata, handles) %volta às condições iniciais
+        set(handles.editSize,'Enable', 'on'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
+        handles.size = get(handles.editSize, 'Value');
+        errorSizeMatrix(hObject, eventdata, handles);
+        
+    case 3 %gaussiano
+        setConditions(hObject, eventdata, handles)
+        set(handles.editSize,'Enable', 'on');          
+        handles.size = get(handles.editSize, 'Value');
+        
+        set(handles.editP1,'Enable', 'on');
+        handles.P1 = get(handles.editP1, 'Value');
+        
+    case 4 %sobel
+        setConditions(hObject, eventdata, handles)
+        set(handles.editSize,'Enable', 'on');  
+        handles.size = get(handles.editSize, 'Value'); 
+        
+    case 5 %sobel
+        setConditions(hObject, eventdata, handles)
+        set(handles.editSize,'Enable', 'on');  
+        handles.size = get(handles.editSize, 'Value'); 
+        
+    case 6 %laplaciano
+        setConditions(hObject, eventdata, handles)
+        set(handles.editP1, 'Enable', 'on');
+        handles.P1 = get(handles.editP1, 'Value');
+        
+    case 7 %mediana
+        setConditions(hObject, eventdata, handles)
+        
+end
+
 
 guidata(hObject,handles);
 
@@ -233,7 +282,7 @@ end
 
 function editSize_Callback(hObject, eventdata, handles)
 handles.size = str2double(get(hObject, 'String'));
-disp(handles.size);
+
 guidata(hObject,handles);
 
 
@@ -282,25 +331,20 @@ end
 % --- Executes on button press in pushbuttonApply.
 function pushbuttonApply_Callback(hObject, eventdata, handles)
 switch(handles.filterValue)
-    case 1  %nada
 
-    case 2  %filtro de média não funciona
-        average = fspecial('average'); %cria a matriz de Karnell
+    case 2  %filtro de média
+        average = fspecial('average', handles.size); %cria a matriz de Karnell de dimensão size definido no callback do popup
         filtered = imfilter(handles.original, average); %aplica o filtro à imagem original
         
         axes(handles.axes4); %manda para o axes da imagem processada
         imshow(filtered); %mostra a imagem
-        
-        guidata(hObject,handles);
        
-    case 3  %filtro gaussiano não funciona
-        gaussian = fspecial('gaussian'); %cria a matriz de Karnell
+    case 3  %filtro gaussiano 
+        gaussian = fspecial('gaussian', handles.size, handles.P1);
         filtered = imfilter(handles.original, gaussian);
         
         axes(handles.axes4);
         imshow(filtered);
-        
-        guidata(hObject,handles);   
         
     case 4  %sobel vertical
         karnell = fspecial('sobel'); %cria a matriz de Karnell
@@ -308,9 +352,7 @@ switch(handles.filterValue)
         filtered = imfilter(handles.original, sobelV);
         
         axes(handles.axes4);
-        imshow(filtered);
-        
-        guidata(hObject,handles);          
+        imshow(filtered);      
      
     case 5 %sobel horizontal
         sobelH = fspecial('sobel'); %cria a matriz de Karnell
@@ -319,16 +361,18 @@ switch(handles.filterValue)
         axes(handles.axes4);
         imshow(filtered);
         
-        guidata(hObject,handles);   
-    
-    case 6 %sobel vertical + horizontal <- isto não tem sentido
-        
-    case 7 %filtro laplaciano
-        laplacian = fspecial('laplacian'); %cria a matriz de Karnell
+    case 6 %filtro laplaciano
+        laplacian = fspecial('laplacian', handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
         filtered = imfilter(handles.original, laplacian);
         
         axes(handles.axes4);
-        imshow(filtered);
+        imshow(filtered);       
+ 
+    case 7 %mediana
+        median = medfilt2(handles.original);
         
-        guidata(hObject,handles);
+        axes(handles.axes4);
+        imshow(median);
 end
+
+guidata(hObject,handles);
