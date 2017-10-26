@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 25-Oct-2017 14:18:31
+% Last Modified by GUIDE v2.5 26-Oct-2017 18:04:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -64,6 +64,10 @@ varargout{1} = handles.output;
 % --- Executes on button press in openIMG.
 function openIMG_Callback(hObject, eventdata, handles)
 [IMGname,IMGpath] = uigetfile({'*.jpg'; '*.bmp'},'Select Image');
+if IMGpath==0
+    msgbox('não sei o que ler :-(');
+    return
+end
 IMGdirectory = strcat(IMGpath,IMGname);
 img = imread(IMGdirectory);
 
@@ -96,12 +100,8 @@ function Contrast_Callback(hObject, eventdata, handles)
 my_adjust(hObject,eventdata,handles);
 cte = get(handles.Contrast, 'Value');
 
-set(handles.showContr, 'String', cte);      
+set(handles.showContr, 'String', int8(cte*100));  %converte o valor do slider em percentagem    
 guidata(hObject,handles);
-
-
-
-
 
 
 % --- Executes during object creation, after setting all properties.
@@ -115,8 +115,8 @@ end
 function brightness_Callback(hObject, eventdata, handles)
 
 my_adjust(hObject, eventdata,handles);
-cte = get(handles.brightness, 'Value');
-set(handles.showBright, 'String', cte);
+cte = (get(handles.brightness, 'Value'));
+set(handles.showBright, 'String', int8(cte*100));
 
 guidata(hObject,handles);
 
@@ -133,17 +133,12 @@ function Gamma_Callback(hObject, eventdata, handles)
 
 my_adjust(hObject,eventdata,handles); %vai buscar o resto dos valores dos sliders
 cte = get(handles.Gamma, 'Value');
-
-set(handles.showGamma, 'String', cte);
+set(handles.showGamma, 'String', double(cte));
 
 guidata(hObject,handles);
 % --- Executes during object creation, after setting all properties.
 function Gamma_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to Gamma (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-% Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
@@ -185,9 +180,13 @@ hold off
 guidata(hObject,handles);
 
 function setConditions(hObject, eventdata, handles)
-set(handles.Gamma, 'Value', 1);
-set(handles.Contrast, 'Value',0);
-set(handles.brightness, 'Value', 0);
+set(handles.Gamma, 'Enable', 'on', 'Value', 1);
+set(handles.Contrast, 'Enable', 'on', 'Value',0);
+set(handles.brightness, 'Enable', 'on', 'Value', 0);
+set(handles.undoB, 'Enable', 'on');
+set(handles.popupFilter, 'Enable', 'on');
+set(handles.pushbuttonApply, 'Enable', 'on');
+set(handles.SaveImg, 'Enable', 'on');
 
 set(handles.showGamma, 'String', 1);
 set(handles.showContr, 'String', 0);
@@ -195,8 +194,6 @@ set(handles.showBright, 'String', 0);
 
 %condições iniciais dos filtros
 set(handles.editSize,'Enable', 'off');
-set(handles.editSize, 'Value', 3);
-
 set(handles.editP1,'Enable', 'off');
 set(handles.editP2,'Enable', 'off');
 
@@ -216,11 +213,8 @@ lastImg = handles.lastImg;  %vamos buscar a última imagem salva para fazer undo
 handles.img = lastImg;
 axes(handles.axes4);
 imshow(lastImg);
-
-axes(handles.axes2);
-imhist(lastImg);
-%cumsum(imhist(lastImg)); %not working
 setConditions(hObject, eventdata, handles);
+my_adjust(hObject, eventdata, handles);
 guidata(hObject,handles);
 
 
@@ -231,44 +225,61 @@ guidata(hObject,handles);
 % --- Executes on selection change in popupFilter.
 function popupFilter_Callback(hObject, eventdata, handles)
 handles.filterValue = get(hObject, 'Value');
-disp(handles.filterValue);
-
+set(handles.editSize,'Enable', 'on'); 
+set(handles.editP1, 'Enable', 'off');
+set(handles.editP2, 'Enable', 'off');
+%defenimos inicialmente quais as caixas que queremos editáveis
 switch(handles.filterValue)
     case 2 %media
-        setConditions(hObject, eventdata, handles) %volta às condições iniciais
-        set(handles.editSize,'Enable', 'on'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
+        set(handles.editSize, 'Value', 3, 'String', '3'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
         handles.size = get(handles.editSize, 'Value');
         errorSizeMatrix(hObject, eventdata, handles);
         
     case 3 %gaussiano
-        setConditions(hObject, eventdata, handles)
-        set(handles.editSize,'Enable', 'on');          
+        set(handles.editSize, 'Value', 3, 'String', '3');          
         handles.size = get(handles.editSize, 'Value');
         
-        set(handles.editP1,'Enable', 'on');
+        set(handles.editP1,'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
         handles.P1 = get(handles.editP1, 'Value');
         
-    case 4 %sobel
-        setConditions(hObject, eventdata, handles)
-        set(handles.editSize,'Enable', 'on');  
-        handles.size = get(handles.editSize, 'Value'); 
+    case 4 %sobel vertical
+        set(handles.editSize,'Enable', 'off'); 
+                
+    case 5 %sobel horizontal
+        set(handles.editSize,'Enable', 'off'); 
         
-    case 5 %sobel
-        setConditions(hObject, eventdata, handles)
-        set(handles.editSize,'Enable', 'on');  
-        handles.size = get(handles.editSize, 'Value'); 
+    case 6 %sobel vertical e horizontal
+        set(handles.editSize,'Enable', 'off'); 
         
-    case 6 %laplaciano
-        setConditions(hObject, eventdata, handles)
-        set(handles.editP1, 'Enable', 'on');
+    case 7 %laplaciano
+        set(handles.editSize, 'Value', 3, 'String', '3');
+        set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2');
+        handles.P1 = get(handles.editP1, 'Value'); %P1 (alfa) TEM QUE ESTAR ENTRE 0 E 1 NESTE FILTRO
+        handles.size = get(handles.editSize, 'Value'); 
+    case 8 %mediana
+        set(handles.editSize, 'Value', 3, 'String', '3');
+        handles.size = get(handles.editSize, 'Value'); 
+    case 9 %logaritmico    
+        set(handles.editSize, 'Value', 5, 'String', '5');
+        set(handles.editP1, 'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
         handles.P1 = get(handles.editP1, 'Value');
-        
-    case 7 %mediana
-        setConditions(hObject, eventdata, handles)
-        
+        handles.size = get(handles.editSize, 'Value'); 
+    case 10 %disco
+        set(handles.editSize, 'Value', 5, 'String', '5');
+        handles.size = get(handles.editSize, 'Value'); 
+    case 11  %motion  
+        set(handles.editSize, 'Value', 9, 'String', '9');
+        set(handles.editP1, 'Enable', 'on', 'Value', 0, 'String', '0'); %teta
+        handles.P1 = get(handles.editP1, 'Value');
+        handles.size = get(handles.editSize, 'Value'); 
+    case 12 %unsharp
+        set(handles.editSize,'Enable', 'off'); 
+        set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2'); %teta
+        handles.P1 = get(handles.editP1, 'Value'); %alfa tem que estar entre 0 e 1
+    case 13 %prewitt   Horizontal+Vertical
+        set(handles.editSize,'Enable', 'off'); 
 end
-
-
+%FAZER: mudar o nome das text box para o parametro de cada filtro conforme
 guidata(hObject,handles);
 
 
@@ -317,12 +328,6 @@ guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function editP2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editP2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -334,45 +339,54 @@ switch(handles.filterValue)
 
     case 2  %filtro de média
         average = fspecial('average', handles.size); %cria a matriz de Karnell de dimensão size definido no callback do popup
-        filtered = imfilter(handles.original, average); %aplica o filtro à imagem original
-        
-        axes(handles.axes4); %manda para o axes da imagem processada
-        imshow(filtered); %mostra a imagem
-       
+        handles.original = imfilter(handles.original, average); %aplica o filtro à imagem original
+               
     case 3  %filtro gaussiano 
         gaussian = fspecial('gaussian', handles.size, handles.P1);
-        filtered = imfilter(handles.original, gaussian);
-        
-        axes(handles.axes4);
-        imshow(filtered);
-        
+        handles.original = imfilter(handles.original, gaussian);
+    
     case 4  %sobel vertical
         karnell = fspecial('sobel'); %cria a matriz de Karnell
         sobelV = transpose(karnell); %para aplicar o filtro sobel na vertical é necessário transpor a matriz
-        filtered = imfilter(handles.original, sobelV);
-        
-        axes(handles.axes4);
-        imshow(filtered);      
-     
+        handles.original = imfilter(handles.original, sobelV);
+      
     case 5 %sobel horizontal
         sobelH = fspecial('sobel'); %cria a matriz de Karnell
-        filtered = imfilter(handles.original, sobelH);
+        handles.original = imfilter(handles.original, sobelH);
         
-        axes(handles.axes4);
-        imshow(filtered);
-        
-    case 6 %filtro laplaciano
+    case 6 %sobel H+V   
+        sobelH = fspecial('sobel'); %cria a matriz de Karnell
+        sobelV = transpose(sobelH);
+        handles.original = imfilter(handles.original, sobelV) + imfilter(handles.original, sobelH);
+                
+    case 7 %filtro laplaciano
         laplacian = fspecial('laplacian', handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
-        filtered = imfilter(handles.original, laplacian);
+        handles.original = imfilter(handles.original, laplacian);
         
-        axes(handles.axes4);
-        imshow(filtered);       
- 
-    case 7 %mediana
-        median = medfilt2(handles.original);
+    case 8 %mediana
+        handles.original = medfilt2(handles.original);
         
-        axes(handles.axes4);
-        imshow(median);
-end
+    case 9 %log
+        logaritmic = fspecial('log',handles.size, handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        handles.original = imfilter(handles.original, logaritmic);
+        
+    case 10 %disk
+        disk = fspecial('disk', handles.size); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        handles.original = imfilter(handles.original, disk);
+        
+    case 11 %motion
+        motion = fspecial('motion', handles.size, handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        handles.original = imfilter(handles.original, motion);
+        
+    case 12 %unsharp
+        unsharp = fspecial('unsharp', handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        handles.original = imfilter(handles.original, unsharp);
+        
+    case 13 %pewitt H+V
+        prewittH = fspecial('prewitt'); %cria a matriz de Karnell
+        prewittV = transpose(prewittH);
+        handles.original = imfilter(handles.original, prewittV) + imfilter(handles.original, prewittH);
+ end
 
 guidata(hObject,handles);
+my_adjust(hObject, eventdata,handles);
