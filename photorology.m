@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 01-Nov-2017 14:54:17
+% Last Modified by GUIDE v2.5 01-Nov-2017 23:13:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -47,10 +47,10 @@ end
 % --- Executes just before photorology is made visible.
 function photorology_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
-set( handles.Gamma, 'Min', 0.3, 'Max', 3, 'Value', 1);
-
-% Update handles structure
 guidata(hObject, handles);
+open=imread('open', 'jpg');
+set(handles.openIMG, 'cdata', open);
+
 
 % UIWAIT makes photorology wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -71,7 +71,7 @@ end
 IMGdirectory = strcat(IMGpath,IMGname);
 img = imread(IMGdirectory);
 
-handles.lastImg = img;
+
 handles.original = img;
 
 axes(handles.axes5);
@@ -180,13 +180,18 @@ hold off
 guidata(hObject,handles);
 
 function setConditions(hObject, eventdata, handles)
+set( handles.Gamma, 'Min', 0.3, 'Max', 3, 'Value', 1);
+
 set(handles.Gamma, 'Enable', 'on', 'Value', 1);
 set(handles.Contrast, 'Enable', 'on', 'Value',0);
 set(handles.brightness, 'Enable', 'on', 'Value', 0);
-set(handles.undoB, 'Enable', 'on');
-set(handles.popupFilter, 'Enable', 'on');
+arrowL=imresize(imread('arrowL', 'jpg'), [50 50]);
 
-set(handles.SaveImg, 'Enable', 'on');
+set(handles.undoB, 'Enable', 'on', 'cdata', arrowL);
+set(handles.popupFilter, 'Enable', 'on');
+save=imread('save', 'jpg');
+set(handles.SaveImg, 'Enable', 'on', 'cdata', save);
+
 set(handles.histEq, 'Enable', 'on');
 set(handles.applyGray, 'Enable', 'on');
 set(handles.applyBW, 'Enable', 'on');
@@ -218,7 +223,6 @@ handles.img = lastImg;
 axes(handles.axes4);
 imshow(lastImg);
 setConditions(hObject, eventdata, handles);
-my_adjust(hObject, eventdata, handles);
 guidata(hObject,handles);
 
 
@@ -249,10 +253,9 @@ switch(handles.filterValue)
         set(handles.editP1,'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
         set(handles.text12, 'String', 'Sigma:');
         handles.P1 = get(handles.editP1, 'Value');
-        
     case 4 %sobel vertical
         set(handles.editSize,'Enable', 'off'); 
-                
+             
     case 5 %sobel horizontal
         set(handles.editSize,'Enable', 'off'); 
         
@@ -350,6 +353,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function applyFilter_Callback(hObject, eventdata, handles)
+handles.lastImg = handles.original;
 switch(handles.filterValue)
     case 1 
     case 2  %filtro de média
@@ -490,6 +494,7 @@ end
 
 % Equalização do histograma
 function histEq_Callback(hObject, eventdata, handles) 
+handles.lastImg = handles.original;
 handles.original = histeq(handles.original);
 guidata(hObject, handles);
 my_adjust(hObject, eventdata, handles); %my_adust coloca o resultado no axes4
@@ -497,6 +502,12 @@ my_adjust(hObject, eventdata, handles); %my_adust coloca o resultado no axes4
 
 % --- Executes on button press in applyBW.
 function applyBW_Callback(hObject, eventdata, handles)
+handles.lastImg = handles.original;
+LEVEL = graythresh(handles.original);  %calcular o threshold que define a partir do qual um pixel é preto ou branco
+handles.original = uint8(255 * im2bw(handles.original,LEVEL)); %queremos que a img continue no intervalo [0,255]
+%binariza a imagem com base no threshold
+guidata(hObject, handles);
+my_adjust(hObject, eventdata, handles);
 
 
 % --- Executes on button press in applyGray.
