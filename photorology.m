@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 01-Nov-2017 00:06:42
+% Last Modified by GUIDE v2.5 01-Nov-2017 14:54:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -185,8 +185,12 @@ set(handles.Contrast, 'Enable', 'on', 'Value',0);
 set(handles.brightness, 'Enable', 'on', 'Value', 0);
 set(handles.undoB, 'Enable', 'on');
 set(handles.popupFilter, 'Enable', 'on');
-set(handles.pushbuttonApply, 'Enable', 'on');
+
 set(handles.SaveImg, 'Enable', 'on');
+set(handles.histEq, 'Enable', 'on');
+set(handles.applyGray, 'Enable', 'on');
+set(handles.applyBW, 'Enable', 'on');
+set(handles.chooseFC, 'Enable', 'on');
 
 set(handles.showGamma, 'String', 1);
 set(handles.showContr, 'String', 0);
@@ -224,6 +228,7 @@ guidata(hObject,handles);
 
 % --- Executes on selection change in popupFilter.
 function popupFilter_Callback(hObject, eventdata, handles)
+set(handles.applyFilter, 'Enable', 'on');
 handles.filterValue = get(hObject, 'Value');
 set(handles.editSize,'Enable', 'on'); 
 set(handles.editP1, 'Enable', 'off');
@@ -231,6 +236,8 @@ set(handles.editP2, 'Enable', 'off');
 %defenimos inicialmente quais as caixas que queremos editáveis
 switch(handles.filterValue)
     case 1
+        set(handles.editSize, 'Enable', 'off');
+        set(handles.applyFilter, 'Enable', 'off');
     case 2 %media
         set(handles.editSize, 'Value', 3, 'String', '3'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
         handles.size = get(handles.editSize, 'Value');
@@ -342,7 +349,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function pushbuttonApply_Callback(hObject, eventdata, handles)
+function applyFilter_Callback(hObject, eventdata, handles)
 switch(handles.filterValue)
     case 1 
     case 2  %filtro de média
@@ -394,12 +401,13 @@ switch(handles.filterValue)
         prewittH = fspecial('prewitt'); %cria a matriz de Karnell
         prewittV = transpose(prewittH);
         handles.original = imfilter(handles.original, prewittV) + imfilter(handles.original, prewittH);
+        %aplicamos o filtro horizontal e vertical
         
     case 14 %manual
         sum = handles.ff1 + handles.ff2 + handles.ff3 + handles.ff4 + handles.ff5 + handles.ff6 + handles.ff7 + handles.ff8 + handles.ff9;
         karnell = [handles.ff1 handles.ff2 handles.ff3; handles.ff4 handles.ff5 handles.ff6; handles.ff7 handles.ff8 handles.ff9]/sum;
         handles.original = imfilter(handles.original, karnell);
-        
+        %karnell é a matriz do filtro manual normalizada
  end
 
 guidata(hObject,handles);
@@ -480,8 +488,82 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in histEq.
-function histEq_Callback(hObject, eventdata, handles)
-% hObject    handle to histEq (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% Equalização do histograma
+function histEq_Callback(hObject, eventdata, handles) 
+handles.original = histeq(handles.original);
+guidata(hObject, handles);
+my_adjust(hObject, eventdata, handles); %my_adust coloca o resultado no axes4
+
+
+% --- Executes on button press in applyBW.
+function applyBW_Callback(hObject, eventdata, handles)
+
+
+% --- Executes on button press in applyGray.
+function applyGray_Callback(hObject, eventdata, handles)
+colormap(handles.axes4, 'gray');
+
+% --- Executes on selection change in chooseFC.
+function chooseFC_Callback(hObject, eventdata, handles)
+set(handles.applyFC, 'Enable', 'on');
+handles.FCvalue = get(hObject, 'Value');
+switch handles.FCvalue
+case 1 
+    set(handles.applyFC, 'Enable', 'off');
+case 2
+    handles.fakecolor = bone;
+case 3 
+    handles.fakecolor = jet;
+case 4 
+    handles.fakecolor = hot;
+case 5
+    handles.fakecolor = hsv;   
+case 6
+    handles.fakecolor = copper;
+case 7
+    handles.fakecolor = lines;
+case 8
+    handles.fakecolor = colorcube;
+case 9
+    handles.fakecolor = vga;   
+case 10
+    handles.fakecolor = prism;   
+    
+end
+guidata(hObject, handles);
+    
+
+
+
+% --- Executes during object creation, after setting all properties.
+function chooseFC_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes on button press in applyFC.
+function applyFC_Callback(hObject, eventdata, handles)
+switch handles.FCvalue
+case 1 
+case 2
+    colormap(handles.axes4,'bone')
+case 3 
+    colormap(handles.axes4,'jet')
+case 4 
+    colormap(handles.axes4,'hot')
+case 5
+    colormap(handles.axes4,'hsv')
+case 6
+    colormap(handles.axes4,'copper')
+case 7
+    colormap(handles.axes4,'lines')
+case 8
+    colormap(handles.axes4,'colorcube')
+case 9
+    colormap(handles.axes4,'vga')   
+case 10
+    colormap(handles.axes4,'prism')  
+end
+guidata(hObject, handles);
+
+    
