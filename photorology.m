@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 26-Oct-2017 18:04:09
+% Last Modified by GUIDE v2.5 01-Nov-2017 00:06:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -230,6 +230,7 @@ set(handles.editP1, 'Enable', 'off');
 set(handles.editP2, 'Enable', 'off');
 %defenimos inicialmente quais as caixas que queremos editáveis
 switch(handles.filterValue)
+    case 1
     case 2 %media
         set(handles.editSize, 'Value', 3, 'String', '3'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
         handles.size = get(handles.editSize, 'Value');
@@ -238,8 +239,8 @@ switch(handles.filterValue)
     case 3 %gaussiano
         set(handles.editSize, 'Value', 3, 'String', '3');          
         handles.size = get(handles.editSize, 'Value');
-        
         set(handles.editP1,'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
+        set(handles.text12, 'String', 'Sigma:');
         handles.P1 = get(handles.editP1, 'Value');
         
     case 4 %sobel vertical
@@ -254,6 +255,7 @@ switch(handles.filterValue)
     case 7 %laplaciano
         set(handles.editSize, 'Value', 3, 'String', '3');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2');
+        set(handles.text12, 'String', 'Alpha:');
         handles.P1 = get(handles.editP1, 'Value'); %P1 (alfa) TEM QUE ESTAR ENTRE 0 E 1 NESTE FILTRO
         handles.size = get(handles.editSize, 'Value'); 
     case 8 %mediana
@@ -262,24 +264,47 @@ switch(handles.filterValue)
     case 9 %logaritmico    
         set(handles.editSize, 'Value', 5, 'String', '5');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
+        set(handles.text12, 'String', 'Sigma:');
         handles.P1 = get(handles.editP1, 'Value');
         handles.size = get(handles.editSize, 'Value'); 
     case 10 %disco
         set(handles.editSize, 'Value', 5, 'String', '5');
+        set(handles.text11, 'String', 'Radius:');
         handles.size = get(handles.editSize, 'Value'); 
     case 11  %motion  
         set(handles.editSize, 'Value', 9, 'String', '9');
         set(handles.editP1, 'Enable', 'on', 'Value', 0, 'String', '0'); %teta
+        set(handles.text12, 'String', 'Theta:');
         handles.P1 = get(handles.editP1, 'Value');
         handles.size = get(handles.editSize, 'Value'); 
     case 12 %unsharp
         set(handles.editSize,'Enable', 'off'); 
-        set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2'); %teta
+        set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2'); %alfa
+        set(handles.text12, 'String', 'Alpha:');
         handles.P1 = get(handles.editP1, 'Value'); %alfa tem que estar entre 0 e 1
     case 13 %prewitt   Horizontal+Vertical
         set(handles.editSize,'Enable', 'off'); 
+    case 14 %Filtro manual: disponibilizamos as edit box e guardamos o seu valor no handles
+        set(handles.editSize,'Enable', 'off'); 
+        set(handles.f1,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff1 = get(handles.f1, 'Value');
+        set(handles.f2,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff2 = get(handles.f2, 'Value');
+        set(handles.f3,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff3 = get(handles.f3, 'Value');
+        set(handles.f4,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff4 = get(handles.f4, 'Value');
+        set(handles.f5,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff5 = get(handles.f5, 'Value');
+        set(handles.f6,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff6 = get(handles.f6, 'Value');
+        set(handles.f7,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff7 = get(handles.f7, 'Value');
+        set(handles.f8,'Enable', 'on', 'Value', 1, 'String', '1'); 
+        handles.ff8 = get(handles.f8, 'Value');
+        set(handles.f9,'Enable', 'on', 'Value', 1, 'String', '1');
+        handles.ff9 = get(handles.f9, 'Value');
 end
-%FAZER: mudar o nome das text box para o parametro de cada filtro conforme
 guidata(hObject,handles);
 
 
@@ -292,11 +317,6 @@ end
 
 
 function editSize_Callback(hObject, eventdata, handles)
-handles.size = str2double(get(hObject, 'String'));
-
-guidata(hObject,handles);
-
-
 
 % --- Executes during object creation, after setting all properties.
 function editSize_CreateFcn(hObject, eventdata, handles)
@@ -308,10 +328,6 @@ end
 
 
 function editP1_Callback(hObject, eventdata, handles)
-handles.P1 = str2double(get(hObject, 'String'));
-guidata(hObject,handles);
-
-
 % --- Executes during object creation, after setting all properties.
 function editP1_CreateFcn(hObject, eventdata, handles)
 
@@ -319,24 +335,16 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function editP2_Callback(hObject, eventdata, handles)
-handles.P2 = str2double(get(hObject, 'String'));
-guidata(hObject,handles);
 
-
-% --- Executes during object creation, after setting all properties.
 function editP2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-
-% --- Executes on button press in pushbuttonApply.
 function pushbuttonApply_Callback(hObject, eventdata, handles)
 switch(handles.filterValue)
-
+    case 1 
     case 2  %filtro de média
         average = fspecial('average', handles.size); %cria a matriz de Karnell de dimensão size definido no callback do popup
         handles.original = imfilter(handles.original, average); %aplica o filtro à imagem original
@@ -386,7 +394,94 @@ switch(handles.filterValue)
         prewittH = fspecial('prewitt'); %cria a matriz de Karnell
         prewittV = transpose(prewittH);
         handles.original = imfilter(handles.original, prewittV) + imfilter(handles.original, prewittH);
+        
+    case 14 %manual
+        sum = handles.ff1 + handles.ff2 + handles.ff3 + handles.ff4 + handles.ff5 + handles.ff6 + handles.ff7 + handles.ff8 + handles.ff9;
+        karnell = [handles.ff1 handles.ff2 handles.ff3; handles.ff4 handles.ff5 handles.ff6; handles.ff7 handles.ff8 handles.ff9]/sum;
+        handles.original = imfilter(handles.original, karnell);
+        
  end
 
 guidata(hObject,handles);
 my_adjust(hObject, eventdata,handles);
+
+
+
+function f1_Callback(hObject, eventdata, handles)
+
+
+function f1_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f4_Callback(hObject, eventdata, handles)
+
+
+function f4_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f7_Callback(hObject, eventdata, handles)
+
+
+function f7_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f2_Callback(hObject, eventdata, handles)
+
+
+function f2_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f5_Callback(hObject, eventdata, handles)
+
+
+function f5_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f8_Callback(hObject, eventdata, handles)
+
+
+function f8_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f3_Callback(hObject, eventdata, handles)
+
+
+function f3_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f6_Callback(hObject, eventdata, handles)
+
+
+function f6_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function f9_Callback(hObject, eventdata, handles)
+
+function f9_CreateFcn(hObject, eventdata, handles)
+
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in histEq.
+function histEq_Callback(hObject, eventdata, handles)
+% hObject    handle to histEq (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
