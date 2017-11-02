@@ -219,11 +219,13 @@ end
 function undoB_Callback(hObject, eventdata, handles)
 
 lastImg = handles.lastImg;  %vamos buscar a última imagem salva para fazer undo
-handles.img = lastImg;
+handles.original = lastImg;
 axes(handles.axes4);
 imshow(lastImg);
 setConditions(hObject, eventdata, handles);
 guidata(hObject,handles);
+my_adjust(hObject, eventdata, handles);
+
 
 
 % --- If Enable == 'on', executes on mouse press in 5 pixel border.
@@ -234,10 +236,20 @@ guidata(hObject,handles);
 function popupFilter_Callback(hObject, eventdata, handles)
 set(handles.applyFilter, 'Enable', 'on');
 handles.filterValue = get(hObject, 'Value');
-set(handles.editSize,'Enable', 'on'); 
-set(handles.editP1, 'Enable', 'off');
-set(handles.editP2, 'Enable', 'off');
-%defenimos inicialmente quais as caixas que queremos editáveis
+set(handles.editSize,'Enable', 'on', 'String', ''); 
+set(handles.editP1, 'Enable', 'off', 'String', '');
+set(handles.editP2, 'Enable', 'off', 'String', '');
+set(handles.f1,'Enable', 'off', 'String', ''); 
+set(handles.f2,'Enable', 'off', 'String', ''); 
+set(handles.f3,'Enable', 'off', 'String', ''); 
+set(handles.f4,'Enable', 'off', 'String', ''); 
+set(handles.f5,'Enable', 'off', 'String', ''); 
+set(handles.f6,'Enable', 'off', 'String', ''); 
+set(handles.f7,'Enable', 'off', 'String', ''); 
+set(handles.f8,'Enable', 'off', 'String', ''); 
+set(handles.f9,'Enable', 'off', 'String', ''); 
+%defenimos inicialmente quais as caixas que queremos editáveis e como surge
+%a sua string
 switch(handles.filterValue)
     case 1
         set(handles.editSize, 'Enable', 'off');
@@ -246,7 +258,6 @@ switch(handles.filterValue)
         set(handles.editSize, 'Value', 3, 'String', '3'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
         handles.size = get(handles.editSize, 'Value');
         errorSizeMatrix(hObject, eventdata, handles);
-        
     case 3 %gaussiano
         set(handles.editSize, 'Value', 3, 'String', '3');          
         handles.size = get(handles.editSize, 'Value');
@@ -255,13 +266,10 @@ switch(handles.filterValue)
         handles.P1 = get(handles.editP1, 'Value');
     case 4 %sobel vertical
         set(handles.editSize,'Enable', 'off'); 
-             
     case 5 %sobel horizontal
         set(handles.editSize,'Enable', 'off'); 
-        
     case 6 %sobel vertical e horizontal
         set(handles.editSize,'Enable', 'off'); 
-        
     case 7 %laplaciano
         set(handles.editSize, 'Value', 3, 'String', '3');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2');
