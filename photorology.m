@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 01-Nov-2017 23:13:27
+% Last Modified by GUIDE v2.5 02-Nov-2017 16:12:58
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -82,7 +82,7 @@ setConditions(hObject, eventdata, handles)
 
 guidata(hObject,handles);
 
-my_adjust(hObject, eventdata, handles);
+my_adjust(hObject, handles);
 
 
 % --- Executes on button press in SaveImg.
@@ -97,7 +97,7 @@ imwrite(handles.img2save,IMGdirectory);
 
 function Contrast_Callback(hObject, eventdata, handles)
 
-my_adjust(hObject,eventdata,handles);
+my_adjust(hObject,handles);
 cte = get(handles.Contrast, 'Value');
 
 set(handles.showContr, 'String', int8(cte*100));  %converte o valor do slider em percentagem    
@@ -114,7 +114,7 @@ end
 % --- Executes on slider movement.
 function brightness_Callback(hObject, eventdata, handles)
 
-my_adjust(hObject, eventdata,handles);
+my_adjust(hObject, handles);
 cte = (get(handles.brightness, 'Value'));
 set(handles.showBright, 'String', int8(cte*100));
 
@@ -131,7 +131,7 @@ end
 % --- Executes on slider movement.
 function Gamma_Callback(hObject, eventdata, handles)
 
-my_adjust(hObject,eventdata,handles); %vai buscar o resto dos valores dos sliders
+my_adjust(hObject,handles); %vai buscar o resto dos valores dos sliders
 cte = get(handles.Gamma, 'Value');
 set(handles.showGamma, 'String', double(cte));
 
@@ -143,7 +143,7 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-function my_adjust(hObject, eventdata, handles)
+function my_adjust(hObject, handles)
 img = handles.original;
 sliderBright = get(handles.brightness, 'Value');
 sliderContrast = get(handles.Contrast, 'Value')/2;
@@ -180,31 +180,42 @@ hold off
 guidata(hObject,handles);
 
 function setConditions(hObject, eventdata, handles)
-set( handles.Gamma, 'Min', 0.3, 'Max', 3, 'Value', 1);
-
-set(handles.Gamma, 'Enable', 'on', 'Value', 1);
+%nesta função definimos todas as condições iniciais 
+%é chamada cada vez que abrimos uma imagem nova
+set(handles.Gamma, 'Enable', 'on', 'Value', 1, 'Min', 0.3, 'Max', 3);
 set(handles.Contrast, 'Enable', 'on', 'Value',0);
 set(handles.brightness, 'Enable', 'on', 'Value', 0);
-arrowL=imresize(imread('arrowL', 'jpg'), [50 50]);
 
+arrowL=imresize(imread('arrowL', 'jpg'), [50 50]);
 set(handles.undoB, 'Enable', 'on', 'cdata', arrowL);
-set(handles.popupFilter, 'Enable', 'on');
 save=imread('save', 'jpg');
 set(handles.SaveImg, 'Enable', 'on', 'cdata', save);
+set(handles.chooseFC, 'Enable', 'on', 'Value', 1);
 
 set(handles.histEq, 'Enable', 'on');
 set(handles.applyGray, 'Enable', 'on');
 set(handles.applyBW, 'Enable', 'on');
-set(handles.chooseFC, 'Enable', 'on');
+set(handles.applyNeg, 'Enable', 'on');
+set(handles.applyFC, 'Enable', 'off');
 
+set(handles.f1, 'String', '');
+set(handles.f2, 'String', '');
+set(handles.f3, 'String', '');
+set(handles.f4, 'String', '');
+set(handles.f5, 'String', '');
+set(handles.f6, 'String', '');
+set(handles.f7, 'String', '');
+set(handles.f8, 'String', '');
+set(handles.f9, 'String', '');
 set(handles.showGamma, 'String', 1);
 set(handles.showContr, 'String', 0);
 set(handles.showBright, 'String', 0);
 
 %condições iniciais dos filtros
-set(handles.editSize,'Enable', 'off');
-set(handles.editP1,'Enable', 'off');
-set(handles.editP2,'Enable', 'off');
+set(handles.popupFilter, 'Enable', 'on', 'Value', 1);
+set(handles.editSize,'Enable', 'off', 'String', '');
+set(handles.editP1,'Enable', 'off', 'String', '');
+set(handles.editP2,'Enable', 'off', 'String', '');
 
 
 function errorSizeMatrix(hObject, eventdata, handles)
@@ -224,7 +235,7 @@ axes(handles.axes4);
 imshow(lastImg);
 setConditions(hObject, eventdata, handles);
 guidata(hObject,handles);
-my_adjust(hObject, eventdata, handles);
+my_adjust(hObject, handles);
 
 
 
@@ -239,6 +250,9 @@ handles.filterValue = get(hObject, 'Value');
 set(handles.editSize,'Enable', 'on', 'String', ''); 
 set(handles.editP1, 'Enable', 'off', 'String', '');
 set(handles.editP2, 'Enable', 'off', 'String', '');
+set(handles.textSize, 'String', 'Size:');
+set(handles.textP1, 'String', 'Param 1:');
+set(handles.textP2, 'String', 'Param 2:');
 set(handles.f1,'Enable', 'off', 'String', ''); 
 set(handles.f2,'Enable', 'off', 'String', ''); 
 set(handles.f3,'Enable', 'off', 'String', ''); 
@@ -262,7 +276,7 @@ switch(handles.filterValue)
         set(handles.editSize, 'Value', 3, 'String', '3');          
         handles.size = get(handles.editSize, 'Value');
         set(handles.editP1,'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
-        set(handles.text12, 'String', 'Sigma:');
+        set(handles.textP1, 'String', 'Sigma:');
         handles.P1 = get(handles.editP1, 'Value');
     case 4 %sobel vertical
         set(handles.editSize,'Enable', 'off'); 
@@ -273,7 +287,7 @@ switch(handles.filterValue)
     case 7 %laplaciano
         set(handles.editSize, 'Value', 3, 'String', '3');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2');
-        set(handles.text12, 'String', 'Alpha:');
+        set(handles.textP1, 'String', 'Alpha:');
         handles.P1 = get(handles.editP1, 'Value'); %P1 (alfa) TEM QUE ESTAR ENTRE 0 E 1 NESTE FILTRO
         handles.size = get(handles.editSize, 'Value'); 
     case 8 %mediana
@@ -282,30 +296,30 @@ switch(handles.filterValue)
     case 9 %logaritmico    
         set(handles.editSize, 'Value', 5, 'String', '5');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
-        set(handles.text12, 'String', 'Sigma:');
+        set(handles.textP1, 'String', 'Sigma:');
         handles.P1 = get(handles.editP1, 'Value');
         handles.size = get(handles.editSize, 'Value'); 
     case 10 %disco
         set(handles.editSize, 'Value', 5, 'String', '5');
-        set(handles.text11, 'String', 'Radius:');
+        set(handles.textSize, 'String', 'Radius:');
         handles.size = get(handles.editSize, 'Value'); 
     case 11  %motion  
         set(handles.editSize, 'Value', 9, 'String', '9');
         set(handles.editP1, 'Enable', 'on', 'Value', 0, 'String', '0'); %teta
-        set(handles.text12, 'String', 'Theta:');
+        set(handles.textP1, 'String', 'Theta:');
         handles.P1 = get(handles.editP1, 'Value');
         handles.size = get(handles.editSize, 'Value'); 
     case 12 %unsharp
         set(handles.editSize,'Enable', 'off'); 
         set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2'); %alfa
-        set(handles.text12, 'String', 'Alpha:');
+        set(handles.textP1, 'String', 'Alpha:');
         handles.P1 = get(handles.editP1, 'Value'); %alfa tem que estar entre 0 e 1
     case 13 %prewitt   Horizontal+Vertical
         set(handles.editSize,'Enable', 'off'); 
     case 14 %Filtro manual: disponibilizamos as edit box e guardamos o seu valor no handles
         set(handles.editSize,'Enable', 'off'); 
         set(handles.f1,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff1 = get(handles.f1, 'Value');
+        handles.ff1 = str2double(get(handles.f1, 'Value'));
         set(handles.f2,'Enable', 'on', 'Value', 1, 'String', '1'); 
         handles.ff2 = get(handles.f2, 'Value');
         set(handles.f3,'Enable', 'on', 'Value', 1, 'String', '1'); 
@@ -423,7 +437,7 @@ switch(handles.filterValue)
  end
 
 guidata(hObject,handles);
-my_adjust(hObject, eventdata,handles);
+my_adjust(hObject, handles);
 
 
 
@@ -505,7 +519,7 @@ function histEq_Callback(hObject, eventdata, handles)
 handles.lastImg = handles.original;
 handles.original = histeq(handles.original);
 guidata(hObject, handles);
-my_adjust(hObject, eventdata, handles); %my_adust coloca o resultado no axes4
+my_adjust(hObject, handles); %my_adust coloca o resultado no axes4
 
 
 % --- Executes on button press in applyBW.
@@ -515,7 +529,7 @@ LEVEL = graythresh(handles.original);  %calcular o threshold que define a partir
 handles.original = uint8(255 * im2bw(handles.original,LEVEL)); %queremos que a img continue no intervalo [0,255]
 %binariza a imagem com base no threshold
 guidata(hObject, handles);
-my_adjust(hObject, eventdata, handles);
+my_adjust(hObject, handles);
 
 
 % --- Executes on button press in applyGray.
@@ -540,9 +554,9 @@ case 5
 case 6
     handles.fakecolor = copper;
 case 7
-    handles.fakecolor = lines;
+    handles.fakecolor = spring;
 case 8
-    handles.fakecolor = colorcube;
+    handles.fakecolor = cool;
 case 9
     handles.fakecolor = vga;   
 case 10
@@ -562,27 +576,24 @@ end
 
 % --- Executes on button press in applyFC.
 function applyFC_Callback(hObject, eventdata, handles)
-switch handles.FCvalue
-case 1 
-case 2
-    colormap(handles.axes4,'bone')
-case 3 
-    colormap(handles.axes4,'jet')
-case 4 
-    colormap(handles.axes4,'hot')
-case 5
-    colormap(handles.axes4,'hsv')
-case 6
-    colormap(handles.axes4,'copper')
-case 7
-    colormap(handles.axes4,'lines')
-case 8
-    colormap(handles.axes4,'colorcube')
-case 9
-    colormap(handles.axes4,'vga')   
-case 10
-    colormap(handles.axes4,'prism')  
-end
+handles.lastImg = handles.original;
+colormap(handles.axes4, handles.fakecolor);
 guidata(hObject, handles);
 
-    
+
+function applyNeg_Callback(hObject, eventdata, handles)
+handles.lastImg = handles.original;
+handles.original = 255 - handles.original;
+guidata(hObject, handles);
+my_adjust(hObject, handles);
+
+function storeArray(hObject, handles)
+
+%TO DOOOOOO:
+%size negativo!!!! bsg box
+%cor tem que manter
+%default p/ contraste brilho e gama
+%UNDO 10x
+
+
+
