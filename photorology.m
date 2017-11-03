@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 02-Nov-2017 16:12:58
+% Last Modified by GUIDE v2.5 02-Nov-2017 22:43:01
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -52,6 +52,7 @@ open=imread('open', 'jpg');
 set(handles.openIMG, 'cdata', open);
 
 
+
 % UIWAIT makes photorology wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -79,7 +80,7 @@ imshow(img)
 
 handles.img = img;
 setConditions(hObject, eventdata, handles)
-
+handles.colorOn = false;
 guidata(hObject,handles);
 
 my_adjust(hObject, handles);
@@ -87,8 +88,10 @@ my_adjust(hObject, handles);
 
 % --- Executes on button press in SaveImg.
 function SaveImg_Callback(hObject, eventdata, handles)
-
 [IMGname,IMGpath] = uiputfile({'*.jpg';'*.bmp'},'Save Image');
+if IMGpath==0
+    return
+end
 IMGdirectory = strcat(IMGpath,IMGname);
 imwrite(handles.img2save,IMGdirectory);
 
@@ -166,8 +169,7 @@ end
 img2 = imadjust(img2,[],[],sliderGamma); 
 
 handles.img2save = img2; %Após o ajuste, criamos uma nova imagem para que possa ser guardada
-axes(handles.axes4);
-imshow(img2);
+
 axes(handles.axes2);
 h=imhist(img2);
 axes(handles.axes2);
@@ -177,14 +179,24 @@ hc=cumsum(h);
 plot(hc/max(hc), 'g', 'LineWidth', 2);
 hold off
 
+if handles.colorOn == true
+    colormap(handles.axes4, handles.fakecolor);
+    axes(handles.axes4);
+    imshow(img2);
+else
+    axes(handles.axes4);
+    imshow(img2);
+end
 guidata(hObject,handles);
 
 function setConditions(hObject, eventdata, handles)
 %nesta função definimos todas as condições iniciais 
 %é chamada cada vez que abrimos uma imagem nova
+
 set(handles.Gamma, 'Enable', 'on', 'Value', 1, 'Min', 0.3, 'Max', 3);
 set(handles.Contrast, 'Enable', 'on', 'Value',0);
 set(handles.brightness, 'Enable', 'on', 'Value', 0);
+set(handles.applyDefault, 'Enable', 'on');
 
 arrowL=imresize(imread('arrowL', 'jpg'), [50 50]);
 set(handles.undoB, 'Enable', 'on', 'cdata', arrowL);
@@ -192,6 +204,7 @@ save=imread('save', 'jpg');
 set(handles.SaveImg, 'Enable', 'on', 'cdata', save);
 set(handles.chooseFC, 'Enable', 'on', 'Value', 1);
 
+set(handles.applyFilter, 'Enable', 'off');
 set(handles.histEq, 'Enable', 'on');
 set(handles.applyGray, 'Enable', 'on');
 set(handles.applyBW, 'Enable', 'on');
@@ -218,11 +231,11 @@ set(handles.editP1,'Enable', 'off', 'String', '');
 set(handles.editP2,'Enable', 'off', 'String', '');
 
 
-function errorSizeMatrix(hObject, eventdata, handles)
-if(handles.size < 1)
-    uiwait(msgbox('The size of the filter must be bigger than 0','Aviso','warn','modal'));
-    set(handles.editSize, 'Value', 3);
-end
+% function errorSizeMatrix(hObject, eventdata, handles)
+% if(handles.size < 1)
+%     uiwait(msgbox('The size of the filter must be bigger than 0','Aviso','warn','modal'));
+%     set(handles.editSize, 'Value', 3);
+% end
 
 
 
@@ -270,14 +283,11 @@ switch(handles.filterValue)
         set(handles.applyFilter, 'Enable', 'off');
     case 2 %media
         set(handles.editSize, 'Value', 3, 'String', '3'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
-        handles.size = get(handles.editSize, 'Value');
-        errorSizeMatrix(hObject, eventdata, handles);
+        %errorSizeMatrix(hObject, eventdata, handles);
     case 3 %gaussiano
         set(handles.editSize, 'Value', 3, 'String', '3');          
-        handles.size = get(handles.editSize, 'Value');
         set(handles.editP1,'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
         set(handles.textP1, 'String', 'Sigma:');
-        handles.P1 = get(handles.editP1, 'Value');
     case 4 %sobel vertical
         set(handles.editSize,'Enable', 'off'); 
     case 5 %sobel horizontal
@@ -288,55 +298,54 @@ switch(handles.filterValue)
         set(handles.editSize, 'Value', 3, 'String', '3');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2');
         set(handles.textP1, 'String', 'Alpha:');
-        handles.P1 = get(handles.editP1, 'Value'); %P1 (alfa) TEM QUE ESTAR ENTRE 0 E 1 NESTE FILTRO
-        handles.size = get(handles.editSize, 'Value'); 
-    case 8 %mediana
-        set(handles.editSize, 'Value', 3, 'String', '3');
-        handles.size = get(handles.editSize, 'Value'); 
+   %P1 (alfa) TEM QUE ESTAR ENTRE 0 E 1 NESTE FILTRO
+      case 8 %mediana
+        set(handles.editSize, 'Value', 3, 'String', '3'); 
     case 9 %logaritmico    
         set(handles.editSize, 'Value', 5, 'String', '5');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
         set(handles.textP1, 'String', 'Sigma:');
-        handles.P1 = get(handles.editP1, 'Value');
-        handles.size = get(handles.editSize, 'Value'); 
     case 10 %disco
         set(handles.editSize, 'Value', 5, 'String', '5');
         set(handles.textSize, 'String', 'Radius:');
-        handles.size = get(handles.editSize, 'Value'); 
     case 11  %motion  
         set(handles.editSize, 'Value', 9, 'String', '9');
         set(handles.editP1, 'Enable', 'on', 'Value', 0, 'String', '0'); %teta
         set(handles.textP1, 'String', 'Theta:');
-        handles.P1 = get(handles.editP1, 'Value');
-        handles.size = get(handles.editSize, 'Value'); 
     case 12 %unsharp
         set(handles.editSize,'Enable', 'off'); 
         set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2'); %alfa
         set(handles.textP1, 'String', 'Alpha:');
-        handles.P1 = get(handles.editP1, 'Value'); %alfa tem que estar entre 0 e 1
+        %alfa tem que estar entre 0 e 1
     case 13 %prewitt   Horizontal+Vertical
         set(handles.editSize,'Enable', 'off'); 
     case 14 %Filtro manual: disponibilizamos as edit box e guardamos o seu valor no handles
         set(handles.editSize,'Enable', 'off'); 
         set(handles.f1,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff1 = str2double(get(handles.f1, 'Value'));
         set(handles.f2,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff2 = get(handles.f2, 'Value');
         set(handles.f3,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff3 = get(handles.f3, 'Value');
         set(handles.f4,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff4 = get(handles.f4, 'Value');
         set(handles.f5,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff5 = get(handles.f5, 'Value');
         set(handles.f6,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff6 = get(handles.f6, 'Value');
         set(handles.f7,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff7 = get(handles.f7, 'Value');
         set(handles.f8,'Enable', 'on', 'Value', 1, 'String', '1'); 
-        handles.ff8 = get(handles.f8, 'Value');
         set(handles.f9,'Enable', 'on', 'Value', 1, 'String', '1');
-        handles.ff9 = get(handles.f9, 'Value');
+        handles.ff1 = get(handles.f1, 'Value');
+        handles.ff2 = get(handles.f1, 'Value');
+        handles.ff3 = get(handles.f1, 'Value');
+        handles.ff4 = get(handles.f1, 'Value');
+        handles.ff5 = get(handles.f1, 'Value');
+        handles.ff6 = get(handles.f1, 'Value');
+        handles.ff7 = get(handles.f1, 'Value');
+        handles.ff8 = get(handles.f1, 'Value');
+        handles.ff9 = get(handles.f1, 'Value');
+       
 end
+handles.size = get(handles.editSize, 'Value');
+handles.P1 = get(handles.editP1, 'Value');
+handles.P2 = get(handles.editP2, 'Value');
+
+%errorSizeMatrix(hObject, eventdata, handles);
 guidata(hObject,handles);
 
 
@@ -349,6 +358,8 @@ end
 
 
 function editSize_Callback(hObject, eventdata, handles)
+handles.size = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
 function editSize_CreateFcn(hObject, eventdata, handles)
@@ -360,6 +371,9 @@ end
 
 
 function editP1_Callback(hObject, eventdata, handles)
+handles.P1 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
 % --- Executes during object creation, after setting all properties.
 function editP1_CreateFcn(hObject, eventdata, handles)
 
@@ -368,6 +382,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function editP2_Callback(hObject, eventdata, handles)
+handles.P2 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function editP2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -433,16 +449,15 @@ switch(handles.filterValue)
         sum = handles.ff1 + handles.ff2 + handles.ff3 + handles.ff4 + handles.ff5 + handles.ff6 + handles.ff7 + handles.ff8 + handles.ff9;
         karnell = [handles.ff1 handles.ff2 handles.ff3; handles.ff4 handles.ff5 handles.ff6; handles.ff7 handles.ff8 handles.ff9]/sum;
         handles.original = imfilter(handles.original, karnell);
-        %karnell é a matriz do filtro manual normalizada
- end
-
+        disp(karnell)%karnell é a matriz do filtro manual normalizada
+end
 guidata(hObject,handles);
+
 my_adjust(hObject, handles);
 
-
-
 function f1_Callback(hObject, eventdata, handles)
-
+handles.ff1 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f1_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -450,7 +465,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f4_Callback(hObject, eventdata, handles)
-
+handles.ff4 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f4_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -458,7 +474,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f7_Callback(hObject, eventdata, handles)
-
+handles.ff7 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f7_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -466,7 +483,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f2_Callback(hObject, eventdata, handles)
-
+handles.ff2 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -474,7 +492,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f5_Callback(hObject, eventdata, handles)
-
+handles.ff5 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f5_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -482,7 +501,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f8_Callback(hObject, eventdata, handles)
-
+handles.ff8 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f8_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -490,7 +510,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f3_Callback(hObject, eventdata, handles)
-
+handles.ff3 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f3_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -498,7 +519,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f6_Callback(hObject, eventdata, handles)
-
+handles.ff6 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f6_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -506,6 +528,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f9_Callback(hObject, eventdata, handles)
+handles.ff9 = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 function f9_CreateFcn(hObject, eventdata, handles)
 
@@ -576,9 +600,11 @@ end
 
 % --- Executes on button press in applyFC.
 function applyFC_Callback(hObject, eventdata, handles)
-handles.lastImg = handles.original;
 colormap(handles.axes4, handles.fakecolor);
+handles.colorOn = true;
 guidata(hObject, handles);
+my_adjust(hObject, handles);
+
 
 
 function applyNeg_Callback(hObject, eventdata, handles)
@@ -592,8 +618,17 @@ function storeArray(hObject, handles)
 %TO DOOOOOO:
 %size negativo!!!! bsg box
 %cor tem que manter
-%default p/ contraste brilho e gama
+%avisos sempre que o numero seja negativo ou uma string
 %UNDO 10x
+%nao precisa de haver undo para o color map porque ja à o botao grayscale
 
 
-
+% --- Executes on button press in applyDefault.
+function applyDefault_Callback(hObject, eventdata, handles)
+set(handles.brightness, 'Value', 0);
+set(handles.Contrast, 'Value', 0);
+set(handles.Gamma, 'Value', 1);
+set(handles.showBright, 'String', '0');
+set(handles.showContr, 'String', '0');
+set(handles.showGamma, 'String', '1');
+my_adjust(hObject, handles);
