@@ -189,6 +189,7 @@ else
 end
 guidata(hObject,handles);
 
+
 function setConditions(hObject, eventdata, handles)
 %nesta função definimos todas as condições iniciais 
 %é chamada cada vez que abrimos uma imagem nova
@@ -236,6 +237,25 @@ set(handles.editP2,'Enable', 'off', 'String', '');
 %     uiwait(msgbox('The size of the filter must be bigger than 0','Aviso','warn','modal'));
 %     set(handles.editSize, 'Value', 3);
 % end
+function checkNumber(editString, hObject) %testa se os valores nas edit box do filtro são inteiros ou decimais
+S = str2num(char(get(editString, 'String')));
+if (isempty(S))
+     set(hObject,'String','1'); 
+     warndlg('Inserir valor inteiro ou decimal','Warning');
+end
+
+function checkIntPositive(editString, hObject)
+S = str2num(char(get(editString, 'String')));
+
+if (isempty(S))
+    set(hObject,'String','0'); 
+    warndlg('Inserir números positivos','Warning');
+end
+
+if S < 0
+    warndlg('Value was negative, you shouldnt do that!');
+    S = -S;
+end
 
 
 
@@ -331,14 +351,14 @@ switch(handles.filterValue)
         set(handles.f8,'Enable', 'on', 'Value', 1, 'String', '1'); 
         set(handles.f9,'Enable', 'on', 'Value', 1, 'String', '1');
         handles.ff1 = get(handles.f1, 'Value');
-        handles.ff2 = get(handles.f1, 'Value');
-        handles.ff3 = get(handles.f1, 'Value');
-        handles.ff4 = get(handles.f1, 'Value');
-        handles.ff5 = get(handles.f1, 'Value');
-        handles.ff6 = get(handles.f1, 'Value');
-        handles.ff7 = get(handles.f1, 'Value');
-        handles.ff8 = get(handles.f1, 'Value');
-        handles.ff9 = get(handles.f1, 'Value');
+        handles.ff2 = get(handles.f2, 'Value');
+        handles.ff3 = get(handles.f3, 'Value');
+        handles.ff4 = get(handles.f4, 'Value');
+        handles.ff5 = get(handles.f5, 'Value');
+        handles.ff6 = get(handles.f6, 'Value');
+        handles.ff7 = get(handles.f7, 'Value');
+        handles.ff8 = get(handles.f8, 'Value');
+        handles.ff9 = get(handles.f9, 'Value');
        
 end
 handles.size = get(handles.editSize, 'Value');
@@ -358,6 +378,7 @@ end
 
 
 function editSize_Callback(hObject, eventdata, handles)
+checkIntPositive(handles.editSize, hObject);
 handles.size = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -424,19 +445,19 @@ switch(handles.filterValue)
         handles.original = medfilt2(handles.original);
         
     case 9 %log
-        logaritmic = fspecial('log',handles.size, handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        logaritmic = fspecial('log',handles.size, handles.P1); 
         handles.original = imfilter(handles.original, logaritmic);
         
     case 10 %disk
-        disk = fspecial('disk', handles.size); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        disk = fspecial('disk', handles.size); 
         handles.original = imfilter(handles.original, disk);
         
     case 11 %motion
-        motion = fspecial('motion', handles.size, handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        motion = fspecial('motion', handles.size, handles.P1); 
         handles.original = imfilter(handles.original, motion);
         
     case 12 %unsharp
-        unsharp = fspecial('unsharp', handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+        unsharp = fspecial('unsharp', handles.P1); 
         handles.original = imfilter(handles.original, unsharp);
         
     case 13 %pewitt H+V
@@ -456,6 +477,7 @@ guidata(hObject,handles);
 my_adjust(hObject, handles);
 
 function f1_Callback(hObject, eventdata, handles)
+checkNumber(handles.f1, hObject);
 handles.ff1 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -465,6 +487,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f4_Callback(hObject, eventdata, handles)
+checkNumber(handles.f4, hObject);
 handles.ff4 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -474,6 +497,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f7_Callback(hObject, eventdata, handles)
+checkNumber(handles.f7, hObject);
 handles.ff7 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -483,6 +507,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f2_Callback(hObject, eventdata, handles)
+checkNumber(handles.f2, hObject);
 handles.ff2 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -492,6 +517,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f5_Callback(hObject, eventdata, handles)
+checkNumber(handles.f5, hObject);
 handles.ff5 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -501,6 +527,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f8_Callback(hObject, eventdata, handles)
+checkNumber(handles.f8, hObject);
 handles.ff8 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -510,6 +537,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f3_Callback(hObject, eventdata, handles)
+checkNumber(handles.f3, hObject);
 handles.ff3 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -519,6 +547,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f6_Callback(hObject, eventdata, handles)
+checkNumber(handles.f6, hObject);
 handles.ff6 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -528,6 +557,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function f9_Callback(hObject, eventdata, handles)
+checkNumber(handles.f9, hObject);
 handles.ff9 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -602,9 +632,9 @@ end
 function applyFC_Callback(hObject, eventdata, handles)
 colormap(handles.axes4, handles.fakecolor);
 handles.colorOn = true;
-guidata(hObject, handles);
 my_adjust(hObject, handles);
 
+guidata(hObject, handles);
 
 
 function applyNeg_Callback(hObject, eventdata, handles)
@@ -620,7 +650,7 @@ function storeArray(hObject, handles)
 %cor tem que manter
 %avisos sempre que o numero seja negativo ou uma string
 %UNDO 10x
-%nao precisa de haver undo para o color map porque ja à o botao grayscale
+%nao precisa de haver undo para o color map porque ja hà o botao grayscale
 
 
 % --- Executes on button press in applyDefault.
