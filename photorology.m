@@ -47,6 +47,7 @@ end
 % --- Executes just before photorology is made visible.
 function photorology_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
+handles.colorOn = false;
 guidata(hObject, handles);
 open=imread('open', 'jpg');
 set(handles.openIMG, 'cdata', open);
@@ -69,20 +70,20 @@ if IMGpath==0
     msgbox('não sei o que ler :-(');
     return
 end
+
 IMGdirectory = strcat(IMGpath,IMGname);
 img = imread(IMGdirectory);
-
-
+[M,N]=size(img); %saber o tamanho da imagem para saber as dimensoes da matriz
+handles.storeImg = zeros(M,N,15); %criar o array onde guardaremos as imagens
+handles.i = 1;%índice do storeArray onde guardaremos as imagens
 handles.original = img;
+
+setConditions(hObject, handles) %colocar a interface nas condiçoes iniciais
 
 axes(handles.axes5);
 imshow(img)
 
-handles.img = img;
-setConditions(hObject, eventdata, handles)
-handles.colorOn = false;
 guidata(hObject,handles);
-
 my_adjust(hObject, handles);
 
 
@@ -147,6 +148,7 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 function my_adjust(hObject, handles)
+storeArray(hObject, handles);
 img = handles.original;
 sliderBright = get(handles.brightness, 'Value');
 sliderContrast = get(handles.Contrast, 'Value')/2;
@@ -178,19 +180,21 @@ hold on
 hc=cumsum(h);
 plot(hc/max(hc), 'g', 'LineWidth', 2);
 hold off
-
+guidata(hObject,handles);
 if handles.colorOn == true
     colormap(handles.axes4, handles.fakecolor);
     axes(handles.axes4);
     imshow(img2);
+    disp('ON')
 else
     axes(handles.axes4);
     imshow(img2);
+    disp('OFF')
 end
-guidata(hObject,handles);
 
 
-function setConditions(hObject, eventdata, handles)
+
+function setConditions(hObject, handles)
 %nesta função definimos todas as condições iniciais 
 %é chamada cada vez que abrimos uma imagem nova
 
@@ -230,6 +234,9 @@ set(handles.popupFilter, 'Enable', 'on', 'Value', 1);
 set(handles.editSize,'Enable', 'off', 'String', '');
 set(handles.editP1,'Enable', 'off', 'String', '');
 set(handles.editP2,'Enable', 'off', 'String', '');
+set(handles.textSize, 'String', 'Size:');
+set(handles.textP1, 'String', 'Param 1:');
+set(handles.textP2, 'String', 'Param 2:');
 
 
 % function errorSizeMatrix(hObject, eventdata, handles)
@@ -257,18 +264,33 @@ if S < 0
     S = -S;
 end
 
+function storeArray(hObject, handles)
+disp(handles.i)
+handles.storeImg(:,:,handles.i) = handles.original;
+handles.i = handles.i+1;
+disp(handles.i)
+guidata(hObject, handles);
+
 
 
 % --- Executes on button press in undoB.
 function undoB_Callback(hObject, eventdata, handles)
-
-lastImg = handles.lastImg;  %vamos buscar a última imagem salva para fazer undo
-handles.original = lastImg;
-axes(handles.axes4);
-imshow(lastImg);
-setConditions(hObject, eventdata, handles);
-guidata(hObject,handles);
+lasti=handles.i-1;
+disp(lasti)
+handles.original = handles.storeImg(:,:,lasti);
+handles.i= handles.i - 1;
+setConditions(hObject, handles);
+guidata(hObject, handles);
 my_adjust(hObject, handles);
+
+
+% lastImg = handles.lastImg;  %vamos buscar a última imagem salva para fazer undo
+% handles.original = lastImg;
+% axes(handles.axes4);
+% imshow(lastImg);
+% setConditions(hObject, handles);
+% guidata(hObject,handles);
+% my_adjust(hObject, handles);
 
 
 
@@ -365,7 +387,6 @@ handles.size = get(handles.editSize, 'Value');
 handles.P1 = get(handles.editP1, 'Value');
 handles.P2 = get(handles.editP2, 'Value');
 
-%errorSizeMatrix(hObject, eventdata, handles);
 guidata(hObject,handles);
 
 
@@ -380,7 +401,7 @@ end
 function editSize_Callback(hObject, eventdata, handles)
 checkIntPositive(handles.editSize, hObject);
 handles.size = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
+guidata(hObject, handles); %vai buscar o valor do parametro e converte para double
 
 % --- Executes during object creation, after setting all properties.
 function editSize_CreateFcn(hObject, eventdata, handles)
@@ -393,7 +414,7 @@ end
 
 function editP1_Callback(hObject, eventdata, handles)
 handles.P1 = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
+guidata(hObject, handles);  %vai buscar o valor do parametro e converte para double
 
 % --- Executes during object creation, after setting all properties.
 function editP1_CreateFcn(hObject, eventdata, handles)
@@ -403,8 +424,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function editP2_Callback(hObject, eventdata, handles)
-handles.P2 = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
+handles.P2 = str2double(get(hObject, 'String')); 
+guidata(hObject, handles);    %vai buscar o valor do parametro e converte para double
 
 function editP2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -473,7 +494,6 @@ switch(handles.filterValue)
         disp(karnell)%karnell é a matriz do filtro manual normalizada
 end
 guidata(hObject,handles);
-
 my_adjust(hObject, handles);
 
 function f1_Callback(hObject, eventdata, handles)
@@ -571,7 +591,7 @@ end
 % Equalização do histograma
 function histEq_Callback(hObject, eventdata, handles) 
 handles.lastImg = handles.original;
-handles.original = histeq(handles.original);
+handles.original = histeq(handles.original); %função paraequalizar o histograma
 guidata(hObject, handles);
 my_adjust(hObject, handles); %my_adust coloca o resultado no axes4
 
@@ -583,12 +603,15 @@ LEVEL = graythresh(handles.original);  %calcular o threshold que define a partir
 handles.original = uint8(255 * im2bw(handles.original,LEVEL)); %queremos que a img continue no intervalo [0,255]
 %binariza a imagem com base no threshold
 guidata(hObject, handles);
+storeArray(hObject, eventdata);
 my_adjust(hObject, handles);
 
 
 % --- Executes on button press in applyGray.
 function applyGray_Callback(hObject, eventdata, handles)
 colormap(handles.axes4, 'gray');
+handles.colorOn = false;
+guidata(hObject, handles);
 
 % --- Executes on selection change in chooseFC.
 function chooseFC_Callback(hObject, eventdata, handles)
@@ -630,7 +653,7 @@ end
 
 % --- Executes on button press in applyFC.
 function applyFC_Callback(hObject, eventdata, handles)
-colormap(handles.axes4, handles.fakecolor);
+%colormap(handles.axes4, handles.fakecolor);
 handles.colorOn = true;
 my_adjust(hObject, handles);
 
@@ -643,15 +666,13 @@ handles.original = 255 - handles.original;
 guidata(hObject, handles);
 my_adjust(hObject, handles);
 
-function storeArray(hObject, handles)
 
 %TO DOOOOOO:
-%size negativo!!!! bsg box
+
 %cor tem que manter
 %avisos sempre que o numero seja negativo ou uma string
 %UNDO 10x
 %nao precisa de haver undo para o color map porque ja hà o botao grayscale
-
 
 % --- Executes on button press in applyDefault.
 function applyDefault_Callback(hObject, eventdata, handles)
