@@ -65,20 +65,19 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in openIMG.
 function openIMG_Callback(hObject, eventdata, handles)
+global i_undo;
 [IMGname,IMGpath] = uigetfile({'*.jpg'; '*.bmp'},'Select Image');
 if IMGpath==0
     msgbox('não sei o que ler :-(');
     return
 end
-
+setConditions(hObject, handles) %colocar a interface nas condiçoes iniciais
 IMGdirectory = strcat(IMGpath,IMGname);
 img = imread(IMGdirectory);
 [M,N]=size(img); %saber o tamanho da imagem para saber as dimensoes da matriz
 handles.storeImg = zeros(M,N,15); %criar o array onde guardaremos as imagens
-handles.i = 1;%índice do storeArray onde guardaremos as imagens
+i_undo = 1;%índice do storeArray onde guardaremos as imagens
 handles.original = img;
-
-setConditions(hObject, handles) %colocar a interface nas condiçoes iniciais
 
 axes(handles.axes5);
 imshow(img)
@@ -96,9 +95,6 @@ end
 IMGdirectory = strcat(IMGpath,IMGname);
 imwrite(handles.img2save,IMGdirectory);
 
-%em vez do hObject (se nao tivermos) podemos usar gcbo
-
-
 function Contrast_Callback(hObject, eventdata, handles)
 
 my_adjust(hObject,handles);
@@ -107,8 +103,6 @@ cte = get(handles.Contrast, 'Value');
 set(handles.showContr, 'String', int8(cte*100));  %converte o valor do slider em percentagem    
 guidata(hObject,handles);
 
-
-% --- Executes during object creation, after setting all properties.
 function Contrast_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
@@ -148,7 +142,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 function my_adjust(hObject, handles)
-storeArray(hObject, handles);
 img = handles.original;
 sliderBright = get(handles.brightness, 'Value');
 sliderContrast = get(handles.Contrast, 'Value')/2;
@@ -182,17 +175,13 @@ plot(hc/max(hc), 'g', 'LineWidth', 2);
 hold off
 guidata(hObject,handles);
 if handles.colorOn == true
-    colormap(handles.axes4, handles.fakecolor);
     axes(handles.axes4);
     imshow(img2);
-    disp('ON')
+    colormap(handles.axes4, handles.fakecolor);
 else
     axes(handles.axes4);
     imshow(img2);
-    disp('OFF')
 end
-
-
 
 function setConditions(hObject, handles)
 %nesta função definimos todas as condições iniciais 
@@ -238,47 +227,31 @@ set(handles.textSize, 'String', 'Size:');
 set(handles.textP1, 'String', 'Param 1:');
 set(handles.textP2, 'String', 'Param 2:');
 
-
-% function errorSizeMatrix(hObject, eventdata, handles)
-% if(handles.size < 1)
-%     uiwait(msgbox('The size of the filter must be bigger than 0','Aviso','warn','modal'));
-%     set(handles.editSize, 'Value', 3);
-% end
 function checkNumber(editString, hObject) %testa se os valores nas edit box do filtro são inteiros ou decimais
-S = str2num(char(get(editString, 'String')));
-if (isempty(S))
+S = str2double(get(editString, 'String'));
+if isnan(S)
      set(hObject,'String','1'); 
-     warndlg('Inserir valor inteiro ou decimal','Warning');
+     uiwait(msgbox('The number must be integer or decimal.','Warning', 'warn', 'modal'));
 end
 
 function checkIntPositive(editString, hObject)
-S = str2num(char(get(editString, 'String')));
-
-if (isempty(S))
-    set(hObject,'String','0'); 
-    warndlg('Inserir números positivos','Warning');
-end
-
-if S < 0
-    warndlg('Value was negative, you shouldnt do that!');
-    S = -S;
+S = str2double(get(editString, 'String'));
+if isnan(S) || S<=0
+    set(hObject,'String','3'); 
+    uiwait(msgbox('The number must be a positive integer.','Warning', 'warn', 'modal'));
 end
 
 function storeArray(hObject, handles)
-disp(handles.i)
-handles.storeImg(:,:,handles.i) = handles.original;
-handles.i = handles.i+1;
-disp(handles.i)
+global i_undo;
+handles.storeImg(:,:,i_undo) = [handles.original];
+i_undo = i_undo+1;
 guidata(hObject, handles);
-
-
 
 % --- Executes on button press in undoB.
 function undoB_Callback(hObject, eventdata, handles)
-lasti=handles.i-1;
-disp(lasti)
-handles.original = handles.storeImg(:,:,lasti);
-handles.i= handles.i - 1;
+global i_undo;
+i_undo=i_undo-1;
+handles.original = handles.storeImg(:,:,i_undo);
 setConditions(hObject, handles);
 guidata(hObject, handles);
 my_adjust(hObject, handles);
@@ -292,13 +265,6 @@ my_adjust(hObject, handles);
 % guidata(hObject,handles);
 % my_adjust(hObject, handles);
 
-
-
-% --- If Enable == 'on', executes on mouse press in 5 pixel border.
-% --- Otherwise, executes on mouse press in 5 pixel border or over undoB.
-
-
-% --- Executes on selection change in popupFilter.
 function popupFilter_Callback(hObject, eventdata, handles)
 set(handles.applyFilter, 'Enable', 'on');
 handles.filterValue = get(hObject, 'Value');
@@ -317,7 +283,7 @@ set(handles.f6,'Enable', 'off', 'String', '');
 set(handles.f7,'Enable', 'off', 'String', ''); 
 set(handles.f8,'Enable', 'off', 'String', ''); 
 set(handles.f9,'Enable', 'off', 'String', ''); 
-%defenimos inicialmente quais as caixas que queremos editáveis e como surge
+%definimos inicialmente quais as caixas que queremos editáveis e como surge
 %a sua string
 switch(handles.filterValue)
     case 1
@@ -325,7 +291,6 @@ switch(handles.filterValue)
         set(handles.applyFilter, 'Enable', 'off');
     case 2 %media
         set(handles.editSize, 'Value', 3, 'String', '3'); %permite ao utilizador preencher o campo que diz respeito ao tamanho do filtro
-        %errorSizeMatrix(hObject, eventdata, handles);
     case 3 %gaussiano
         set(handles.editSize, 'Value', 3, 'String', '3');          
         set(handles.editP1,'Enable', 'on', 'Value', 0.5, 'String', '0.5'); %sigma
@@ -339,9 +304,9 @@ switch(handles.filterValue)
     case 7 %laplaciano
         set(handles.editSize, 'Value', 3, 'String', '3');
         set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2');
-        set(handles.textP1, 'String', 'Alpha:');
-   %P1 (alfa) TEM QUE ESTAR ENTRE 0 E 1 NESTE FILTRO
-      case 8 %mediana
+        set(handles.textP1, 'String', 'Alpha:'); 
+        %P1 (alfa) TEM QUE ESTAR ENTRE 0 E 1 NESTE FILTRO
+    case 8 %mediana
         set(handles.editSize, 'Value', 3, 'String', '3'); 
     case 9 %logaritmico    
         set(handles.editSize, 'Value', 5, 'String', '5');
@@ -400,7 +365,8 @@ end
 
 function editSize_Callback(hObject, eventdata, handles)
 checkIntPositive(handles.editSize, hObject);
-handles.size = str2double(get(hObject, 'String'));
+handles.size = floor(str2double(get(hObject, 'String')));
+set(handles.editSize, 'String', handles.size);
 guidata(hObject, handles); %vai buscar o valor do parametro e converte para double
 
 % --- Executes during object creation, after setting all properties.
@@ -438,12 +404,17 @@ switch(handles.filterValue)
     case 1 
     case 2  %filtro de média
         average = fspecial('average', handles.size); %cria a matriz de Karnell de dimensão size definido no callback do popup
-        handles.original = imfilter(handles.original, average); %aplica o filtro à imagem original
-               
+        handles.original = imfilter(handles.original, average); %aplica o filtro à imagem original    
+        
     case 3  %filtro gaussiano 
-        gaussian = fspecial('gaussian', handles.size, handles.P1);
-        handles.original = imfilter(handles.original, gaussian);
-    
+        if isnan(handles.P1) || handles.P1 <= 0 %testa se estão escritos só números
+            set(handles.editP1, 'Enable', 'on', 'Value', 0.5, 'String', '0.5');
+            uiwait(msgbox('Sigma must be a positive number.','Warning', 'warn', 'modal'));
+        else
+            gaussian = fspecial('gaussian', handles.size, handles.P1);
+            handles.original = imfilter(handles.original, gaussian); 
+        end    
+        
     case 4  %sobel vertical
         karnell = fspecial('sobel'); %cria a matriz de Karnell
         sobelV = transpose(karnell); %para aplicar o filtro sobel na vertical é necessário transpor a matriz
@@ -459,28 +430,48 @@ switch(handles.filterValue)
         handles.original = imfilter(handles.original, sobelV) + imfilter(handles.original, sobelH);
                 
     case 7 %filtro laplaciano
-        laplacian = fspecial('laplacian', handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
-        handles.original = imfilter(handles.original, laplacian);
+        if isnan(handles.P1) || handles.P1 < 0 || handles.P1 > 1%testa se estão escritos só números
+            set(handles.editP1, 'Enable', 'on', 'Value', 0.2, 'String', '0.2');
+            uiwait(msgbox('Alpha must be a number higher than 0 and lower than 1.','Warning', 'warn', 'modal'));
+        else
+            laplacian = fspecial('laplacian', handles.P1); %cria a matriz de Karnell e pede valor alfa q varia entre 0 a 1 (double)
+            handles.original = imfilter(handles.original, laplacian);  
+        end     
         
     case 8 %mediana
         handles.original = medfilt2(handles.original);
         
     case 9 %log
-        logaritmic = fspecial('log',handles.size, handles.P1); 
-        handles.original = imfilter(handles.original, logaritmic);
+        if isnan(handles.P1) || handles.P1 <= 0 %testa se estão escritos só números
+            set(handles.editP1, 'Enable', 'on', 'Value', 0.5, 'String', '0.5');
+            uiwait(msgbox('Sigma must be a positive number.','Warning', 'warn', 'modal'));
+        else
+            logaritmic = fspecial('log',handles.size, handles.P1); 
+            handles.original = imfilter(handles.original, logaritmic);
+        end         
         
     case 10 %disk
         disk = fspecial('disk', handles.size); 
         handles.original = imfilter(handles.original, disk);
         
     case 11 %motion
-        motion = fspecial('motion', handles.size, handles.P1); 
-        handles.original = imfilter(handles.original, motion);
+        if isnan(handles.P1) %verifica se P1 é um número
+            set(handles.editP1, 'Value', 0, 'String', '0');
+            uiwait(msgbox('Theta must be a number.','Warning', 'warn', 'modal'));
+        else %caso nao seja, aplicamos o filtro
+            motion = fspecial('motion', handles.size, handles.P1); 
+            handles.original = imfilter(handles.original, motion);
+        end
         
     case 12 %unsharp
-        unsharp = fspecial('unsharp', handles.P1); 
-        handles.original = imfilter(handles.original, unsharp);
-        
+         if isnan(handles.P1) || handles.P1 < 0 || handles.P1 > 1 %testa se estão escritos só números entre 0 e 1
+            set(handles.editP1, 'Value', 0.2, 'String', '0.2');
+            uiwait(msgbox('Alpha must be a number higher than 0 and lower than 1.','Warning', 'warn', 'modal'));
+        else
+            unsharp = fspecial('unsharp', handles.P1); 
+            handles.original = imfilter(handles.original, unsharp); 
+        end   
+      
     case 13 %pewitt H+V
         prewittH = fspecial('prewitt'); %cria a matriz de Karnell
         prewittV = transpose(prewittH);
@@ -491,13 +482,15 @@ switch(handles.filterValue)
         sum = handles.ff1 + handles.ff2 + handles.ff3 + handles.ff4 + handles.ff5 + handles.ff6 + handles.ff7 + handles.ff8 + handles.ff9;
         karnell = [handles.ff1 handles.ff2 handles.ff3; handles.ff4 handles.ff5 handles.ff6; handles.ff7 handles.ff8 handles.ff9]/sum;
         handles.original = imfilter(handles.original, karnell);
-        disp(karnell)%karnell é a matriz do filtro manual normalizada
+        %karnell é a matriz do filtro manual normalizada, que introduzimos
+        %na função imfilter
 end
 guidata(hObject,handles);
+storeArray(hObject, handles);
 my_adjust(hObject, handles);
 
-function f1_Callback(hObject, eventdata, handles)
-checkNumber(handles.f1, hObject);
+function f1_Callback(hObject, eventdata, handles) %valores do filtro manual
+checkNumber(handles.f1, hObject); %confirmar que é um número
 handles.ff1 = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
@@ -587,33 +580,27 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-% Equalização do histograma
-function histEq_Callback(hObject, eventdata, handles) 
+function histEq_Callback(hObject, eventdata, handles) % Equalização do histograma 
 handles.lastImg = handles.original;
 handles.original = histeq(handles.original); %função paraequalizar o histograma
 guidata(hObject, handles);
+storeArray(hObject, handles);
 my_adjust(hObject, handles); %my_adust coloca o resultado no axes4
 
-
-% --- Executes on button press in applyBW.
-function applyBW_Callback(hObject, eventdata, handles)
+function applyBW_Callback(hObject, eventdata, handles) %Passar pra preto e branco
 handles.lastImg = handles.original;
 LEVEL = graythresh(handles.original);  %calcular o threshold que define a partir do qual um pixel é preto ou branco
 handles.original = uint8(255 * im2bw(handles.original,LEVEL)); %queremos que a img continue no intervalo [0,255]
 %binariza a imagem com base no threshold
 guidata(hObject, handles);
-storeArray(hObject, eventdata);
+storeArray(hObject, handles);
 my_adjust(hObject, handles);
 
-
-% --- Executes on button press in applyGray.
 function applyGray_Callback(hObject, eventdata, handles)
-colormap(handles.axes4, 'gray');
+colormap(handles.axes4, 'gray'); %Voltar à escala de cinzento
 handles.colorOn = false;
 guidata(hObject, handles);
 
-% --- Executes on selection change in chooseFC.
 function chooseFC_Callback(hObject, eventdata, handles)
 set(handles.applyFC, 'Enable', 'on');
 handles.FCvalue = get(hObject, 'Value');
@@ -642,39 +629,24 @@ case 10
 end
 guidata(hObject, handles);
     
-
-
-
-% --- Executes during object creation, after setting all properties.
 function chooseFC_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-% --- Executes on button press in applyFC.
 function applyFC_Callback(hObject, eventdata, handles)
-%colormap(handles.axes4, handles.fakecolor);
 handles.colorOn = true;
 my_adjust(hObject, handles);
 
 guidata(hObject, handles);
 
-
 function applyNeg_Callback(hObject, eventdata, handles)
 handles.lastImg = handles.original;
 handles.original = 255 - handles.original;
 guidata(hObject, handles);
+storeArray(hObject, handles);
 my_adjust(hObject, handles);
 
-
-%TO DOOOOOO:
-
-%cor tem que manter
-%avisos sempre que o numero seja negativo ou uma string
-%UNDO 10x
-%nao precisa de haver undo para o color map porque ja hà o botao grayscale
-
-% --- Executes on button press in applyDefault.
 function applyDefault_Callback(hObject, eventdata, handles)
 set(handles.brightness, 'Value', 0);
 set(handles.Contrast, 'Value', 0);
