@@ -22,7 +22,7 @@ function varargout = photorology(varargin)
 
 % Edit the above text to modify the response to help photorology
 
-% Last Modified by GUIDE v2.5 02-Nov-2017 22:43:01
+% Last Modified by GUIDE v2.5 09-Nov-2017 00:36:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -68,10 +68,17 @@ function openIMG_Callback(hObject, eventdata, handles)
 global i_undo;
 [IMGname,IMGpath] = uigetfile({'*.jpg'; '*.bmp'},'Select Image');
 if IMGpath==0
-    msgbox('não sei o que ler :-(');
+    uiwait(msgbox('Dont know what to read :(', 'Warning', 'warn', 'modal'));
     return
 end
 setConditions(hObject, handles) %colocar a interface nas condiçoes iniciais
+
+%set(handles.undoB, 'Enable', 'off'); %seria usado caso o undo funcionasse
+%para mais que um passo
+arrowL=imresize(imread('arrowL', 'jpg'), [50 50]);
+set(handles.undoB, 'Enable', 'on', 'cdata', arrowL);
+
+
 IMGdirectory = strcat(IMGpath,IMGname);
 img = imread(IMGdirectory);
 [M,N]=size(img); %saber o tamanho da imagem para saber as dimensoes da matriz
@@ -90,6 +97,7 @@ my_adjust(hObject, handles);
 function SaveImg_Callback(hObject, eventdata, handles)
 [IMGname,IMGpath] = uiputfile({'*.jpg';'*.bmp'},'Save Image');
 if IMGpath==0
+    uiwait(msgbox('Dont know what to save :(', 'Warning', 'warn', 'modal'));
     return
 end
 IMGdirectory = strcat(IMGpath,IMGname);
@@ -192,8 +200,6 @@ set(handles.Contrast, 'Enable', 'on', 'Value',0);
 set(handles.brightness, 'Enable', 'on', 'Value', 0);
 set(handles.applyDefault, 'Enable', 'on');
 
-arrowL=imresize(imread('arrowL', 'jpg'), [50 50]);
-set(handles.undoB, 'Enable', 'on', 'cdata', arrowL);
 save=imread('save', 'jpg');
 set(handles.SaveImg, 'Enable', 'on', 'cdata', save);
 set(handles.chooseFC, 'Enable', 'on', 'Value', 1);
@@ -241,29 +247,45 @@ if isnan(S) || S<=0
     uiwait(msgbox('The number must be a positive integer.','Warning', 'warn', 'modal'));
 end
 
-function storeArray(hObject, handles)
-global i_undo;
-handles.storeImg(:,:,i_undo) = [handles.original];
-i_undo = i_undo+1;
-guidata(hObject, handles);
+% function storeArray(hObject, handles)
+% global i_undo;
+% arrowL=imresize(imread('arrowL', 'jpg'), [50 50]);
+% set(handles.undoB, 'Enable', 'on', 'cdata', arrowL);
+% handles.storeImg(:,:,i_undo) = [handles.original];
+% i_undo = i_undo+1;
+% guidata(hObject, handles);
 
 % --- Executes on button press in undoB.
 function undoB_Callback(hObject, eventdata, handles)
-global i_undo;
-i_undo=i_undo-1;
-handles.original = handles.storeImg(:,:,i_undo);
+% global i_undo;
+% i_undo=i_undo-1;
+% if i_undo > 1
+%     handles.original = handles.storeImg(:,:,i_undo);
+%     setConditions(hObject, handles);    
+% elseif i_undo == 1
+%     set(handles.undoB, 'Enable', 'off');
+%     handles.original = handles.storeImg(:,:,i_undo);
+%     setConditions(hObject, handles);
+% else
+%     return
+% end
+% guidata(hObject, handles);    
+% my_adjust(hObject, handles);
+
+%vamos buscar a última imagem salva para fazer undo
+arrowR=imresize(imread('arrowR', 'jpg'), [50 50]);
+set(handles.redoB, 'Enable', 'on', 'cdata', arrowR);
+handles.redo = handles.original;
+handles.original = handles.lastImg;
 setConditions(hObject, handles);
-guidata(hObject, handles);
+guidata(hObject,handles);
 my_adjust(hObject, handles);
 
-
-% lastImg = handles.lastImg;  %vamos buscar a última imagem salva para fazer undo
-% handles.original = lastImg;
-% axes(handles.axes4);
-% imshow(lastImg);
-% setConditions(hObject, handles);
-% guidata(hObject,handles);
-% my_adjust(hObject, handles);
+function redoB_Callback(hObject, eventdata, handles)
+handles.original = handles.redo;
+guidata(hObject, handles);
+my_adjust(hObject, handles);
+set(handles.redoB, 'Enable', 'off');
 
 function popupFilter_Callback(hObject, eventdata, handles)
 set(handles.applyFilter, 'Enable', 'on');
@@ -486,7 +508,7 @@ switch(handles.filterValue)
         %na função imfilter
 end
 guidata(hObject,handles);
-storeArray(hObject, handles);
+% storeArray(hObject, handles);
 my_adjust(hObject, handles);
 
 function f1_Callback(hObject, eventdata, handles) %valores do filtro manual
@@ -593,7 +615,7 @@ LEVEL = graythresh(handles.original);  %calcular o threshold que define a partir
 handles.original = uint8(255 * im2bw(handles.original,LEVEL)); %queremos que a img continue no intervalo [0,255]
 %binariza a imagem com base no threshold
 guidata(hObject, handles);
-storeArray(hObject, handles);
+%storeArray(hObject, handles);
 my_adjust(hObject, handles);
 
 function applyGray_Callback(hObject, eventdata, handles)
@@ -644,7 +666,7 @@ function applyNeg_Callback(hObject, eventdata, handles)
 handles.lastImg = handles.original;
 handles.original = 255 - handles.original;
 guidata(hObject, handles);
-storeArray(hObject, handles);
+%storeArray(hObject, handles);
 my_adjust(hObject, handles);
 
 function applyDefault_Callback(hObject, eventdata, handles)
@@ -655,3 +677,6 @@ set(handles.showBright, 'String', '0');
 set(handles.showContr, 'String', '0');
 set(handles.showGamma, 'String', '1');
 my_adjust(hObject, handles);
+
+
+
