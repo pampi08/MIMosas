@@ -80,8 +80,6 @@ handles.phantom = phantom(handles.typePhantom, handles.resolution);
 axes(handles.axes1);
 imshow(handles.phantom);
 
-guidata(hObject, handles);
-
 function getAllOptionsPopUp(PopUpMenu,handles) %maneira de obter a opção escolhida no popupmenu
 allItems = get(handles.popUpMenu,'string');
 selectedIndex = get(handles.popUpMenu,'Value');
@@ -92,9 +90,6 @@ guidata(hObject, handles);
 
 % --- Executes on selection change in phantomPopUp.
 function phantomPopUp_Callback(hObject, eventdata, handles)
-
-%repetição de código. A função já está definida em cima é necessário
-%implementar dentro dos popups GetAllOptionsPopUp
 allItems = get(handles.phantomPopUp,'string');
 selectedIndex = get(handles.phantomPopUp,'Value');
 handles.typePhantom = allItems{selectedIndex};
