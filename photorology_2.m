@@ -22,7 +22,7 @@ function varargout = photorology_2(varargin)
 
 % Edit the above text to modify the response to help photorology_2
 
-% Last Modified by GUIDE v2.5 07-Nov-2017 21:44:20
+% Last Modified by GUIDE v2.5 17-Nov-2017 01:28:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -46,30 +46,11 @@ end
 
 % --- Executes just before photorology_2 is made visible.
 function photorology_2_OpeningFcn(hObject, eventdata, handles, varargin)
-% This function has no output args, see OutputFcn.
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to photorology_2 (see VARARGIN)
-
-% Choose default command line output for photorology_2
 handles.output = hObject;
-
-% Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes photorology_2 wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
 
-
-% --- Outputs from this function are returned to the command line.
 function varargout = photorology_2_OutputFcn(hObject, eventdata, handles) 
-% varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Get default command line output from handles structure
 varargout{1} = handles.output;
 
 function phantomNResolution(handles)
@@ -99,7 +80,7 @@ selectedIndex = get(handles.ResolutionPopUp,'Value');
 handles.resolution = allItems{selectedIndex};
 
 
-if(~strcmp(handles.resolution, 'Resolution') & ~strcmp(handles.typePhantom, 'Phantoms'))
+if(~strcmp(handles.resolution, ' --- Resolution ---') && ~strcmp(handles.typePhantom, ' --- Phantoms ---'))
     phantomNResolution(handles);
 end
 
@@ -122,7 +103,7 @@ allItems = get(handles.ResolutionPopUp,'string');
 selectedIndex = get(handles.ResolutionPopUp,'Value');
 handles.resolution = allItems{selectedIndex};
 
-if(~strcmp(handles.resolution, 'Resolution') & ~strcmp(handles.typePhantom, 'Phantoms'))
+if(~strcmp(handles.resolution, ' --- Resolution ---') & ~strcmp(handles.typePhantom, ' --- Phantoms ---'))
     phantomNResolution(handles);
 end
 
@@ -137,14 +118,16 @@ end
 function importFolder_Callback(hObject, eventdata, handles)
 [IMGname,IMGpath] = uigetfile('*.bmp','Select Image');
 if IMGpath==0
-    msgbox('não sei o que ler :-(');
+    uiwait(msgbox('Dont know what to read :(', 'Warning', 'warn', 'modal'));
     return
 end
 IMGdirectory = strcat(IMGpath,IMGname);
 img = imread(IMGdirectory);
+handles.seno=img;
 
 axes(handles.axes2);
 imshow(img);
+guidata(hObject, handles);
 
 % --- Executes on button press in importTest.
 function importTest_Callback(hObject, eventdata, handles)
@@ -161,20 +144,16 @@ guidata(hObject, handles);
 function saveImg_Callback(hObject, eventdata, handles)
 [IMGname,IMGpath] = uiputfile({'*.jpg';'*.bmp'},'Save Image');
 if IMGpath==0
+    uiwait(msgbox('Dont know what to save :(', 'Warning', 'warn', 'modal'));
     return
 end
 IMGdirectory = strcat(IMGpath,IMGname);
 imwrite(handles.img2save,IMGdirectory);
-% hObject    handle to saveImg (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
 
 
 % --- Executes on button press in saveSeno.
 function saveSeno_Callback(hObject, eventdata, handles)
-% hObject    handle to saveSeno (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
 
 % --- Executes on selection change in interpolPopUp.
@@ -189,12 +168,6 @@ function interpolPopUp_Callback(hObject, eventdata, handles)
 
 % --- Executes during object creation, after setting all properties.
 function interpolPopUp_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to interpolPopUp (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -202,22 +175,10 @@ end
 
 % --- Executes on selection change in filterPopUp.
 function filterPopUp_Callback(hObject, eventdata, handles)
-% hObject    handle to filterPopUp (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns filterPopUp contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from filterPopUp
 
 
 % --- Executes during object creation, after setting all properties.
 function filterPopUp_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to filterPopUp (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -225,58 +186,10 @@ end
 
 % --- Executes on button press in reconsImg.
 function reconsImg_Callback(hObject, eventdata, handles)
-% hObject    handle to reconsImg (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
 
 % --- Executes on button press in saveRecons.
 function saveRecons_Callback(hObject, eventdata, handles)
-% hObject    handle to saveRecons (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-
-function noise_Callback(hObject, eventdata, handles)
-% hObject    handle to noise (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of noise as text
-%        str2double(get(hObject,'String')) returns contents of noise as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function noise_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to noise (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function projections_Callback(hObject, eventdata, handles)
-handles.projectionValue = get(hObject, 'Value');
-
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function projections_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to projections (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 
 % --- Executes on button press in openImg.
@@ -294,9 +207,31 @@ imshow(img)
 axes(handles.axes3);
 imshow(img)
 
+% --- Executes on button press in reconstructImg.
+function reconstructImg_Callback(hObject, eventdata, handles)
 
-% --- Executes on button press in applyPhantom.
-function applyPhantom_Callback(hObject, eventdata, handles)
-% hObject    handle to applyPhantom (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function noise_Callback(hObject, eventdata, handles)
+handles.noiseValue = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function noise_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function projections_Callback(hObject, eventdata, handles)
+handles.projectionValue = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function projections_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
