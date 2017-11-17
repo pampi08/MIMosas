@@ -53,18 +53,13 @@ guidata(hObject, handles);
 function varargout = photorology_2_OutputFcn(hObject, eventdata, handles) 
 varargout{1} = handles.output;
 
-function phantomNResolution(handles)
+function phantomNResolution(hObject, handles)
 handles.resolution = str2num(handles.resolution);
 
 handles.phantom = phantom(handles.typePhantom, handles.resolution);
 
 axes(handles.axes1);
 imshow(handles.phantom);
-
-function getAllOptionsPopUp(PopUpMenu,handles) %maneira de obter a opção escolhida no popupmenu
-allItems = get(handles.popUpMenu,'string');
-selectedIndex = get(handles.popUpMenu,'Value');
-selectedItem = allItems{selectedIndex};
 
 guidata(hObject, handles);
 
@@ -81,7 +76,7 @@ handles.resolution = allItems{selectedIndex};
 
 
 if(~strcmp(handles.resolution, ' --- Resolution ---') && ~strcmp(handles.typePhantom, ' --- Phantoms ---'))
-    phantomNResolution(handles);
+    phantomNResolution(hObject, handles);
 end
 
 guidata(hObject, handles);
@@ -104,7 +99,7 @@ selectedIndex = get(handles.ResolutionPopUp,'Value');
 handles.resolution = allItems{selectedIndex};
 
 if(~strcmp(handles.resolution, ' --- Resolution ---') & ~strcmp(handles.typePhantom, ' --- Phantoms ---'))
-    phantomNResolution(handles);
+    phantomNResolution(hObject, handles);
 end
 
 guidata(hObject, handles);
@@ -131,7 +126,16 @@ guidata(hObject, handles);
 
 % --- Executes on button press in importTest.
 function importTest_Callback(hObject, eventdata, handles)
-r = radon(handles.phantom, handles.projectionValue);
+degreePasse = 360/handles.projectionValue; %calcular a distância em graus entre projeçoes
+projectionArray=zeros(handles.projectionValue); %criar vetor com os valores dos angulos
+index=2;
+nextDegree = degreePasse;
+while(nextDegree<=360)
+    projectionArray(index)= degreePasse;
+    index=index+1;
+    nextDegree = nextDegree + degreePasse;
+end    
+r = radon(handles.phantom, projectionArray);
 %precisa da lista de todas as projecçoes, é preciso identificar as
 %projecçoes
 %no segundo argumento primeiro damos o intervalo e depois o passo
