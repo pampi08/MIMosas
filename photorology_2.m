@@ -22,7 +22,7 @@ function varargout = photorology_2(varargin)
 
 % Edit the above text to modify the response to help photorology_2
 
-% Last Modified by GUIDE v2.5 17-Nov-2017 01:28:49
+% Last Modified by GUIDE v2.5 19-Nov-2017 17:57:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -54,20 +54,23 @@ function varargout = photorology_2_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 function phantomNResolution(hObject, handles)
-
 handles.resolution = str2num(handles.resolution); %convertemos o valor da resolução para número
 phantomT = phantom(handles.typePhantom, handles.resolution); %criamos o fantoma
+handles=guidata(hObject);
 handles.phantomTest=phantomT; %guardamos numa variável da estrutura handles
 %foi necessário criar  avariável handles e a local visto que sem a local
 %não estava a funcionar
 %NAO FUNCIONA NA MESMA!! handles.phantomTest NAO PASSA DAQUI NAO SEI PQ
-set(handles.saveImg, 'Enable', 'on');
+save=imread('savesave', 'jpg');
+set(handles.saveImg, 'Enable', 'on', 'cdata', save);
+set(handles.projections, 'Enable', 'on', 'String', '180');
 set(handles.importTest, 'Enable', 'on');
-set(handles.projections, 'Enable', 'on');
-set(handles.noise, 'Enable', 'on');
+handles.projectionValue = 180;
+%HANDLES.PROJECTIONVALUE NAO PASSA DAQUI
+set(handles.addNoise, 'Enable', 'on', 'Min', 0, 'Max', 100, 'Value', 0);
 guidata(hObject, handles);
 axes(handles.axes1);
-imshow(phantomT);
+imshow(phantomT, 'InitialMagnification','fit');
 
 
 % --- Executes on selection change in phantomPopUp.
@@ -83,7 +86,7 @@ handles.resolution = allItems{selectedIndex};
 
 if(~strcmp(handles.resolution, ' --- Resolution ---') && ~strcmp(handles.typePhantom, ' --- Phantoms ---'))
     phantomNResolution(hObject, handles);
-    
+    handles=guidata(hObject);
 end
 
 guidata(hObject, handles);
@@ -107,8 +110,8 @@ handles.resolution = allItems{selectedIndex};
 
 if(~strcmp(handles.resolution, ' --- Resolution ---') && ~strcmp(handles.typePhantom, ' --- Phantoms ---'))
     phantomNResolution(hObject, handles);
+    handles=guidata(hObject);
 end
-
 guidata(hObject, handles);
         
 function ResolutionPopUp_CreateFcn(hObject, eventdata, handles)
@@ -116,9 +119,20 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+function setSenoConditions(hObject, handles)
+save=imread('savesave', 'jpg');
+set(handles.saveSeno, 'Enable', 'on', 'cdata', save);
+set(handles.interpolPopUp, 'Enable', 'on');
+set(handles.filterPopUp, 'Enable', 'on');
+set(handles.addNoise, 'Enable', 'on', 'Min', 0, 'Max', 100, 'Value', 0);
+handles.noiseValue = 0;
+set(handles.currentNoise, 'String', '0%'); 
+handles.typeInterpol = ' --- Interpolation Type ---';
+handles.typeFilter = ' --- Filter ---';
+guidata(hObject, handles);
 
 function importFolder_Callback(hObject, eventdata, handles)
-[IMGname,IMGpath] = uigetfile('*.bmp','Select Image');
+[IMGname,IMGpath] = uigetfile({'*.seno';'*.bmp'},'Select Image');
 if IMGpath==0
     uiwait(msgbox('Dont know what to read :(', 'Warning', 'warn', 'modal'));
     return
@@ -126,30 +140,40 @@ end
 IMGdirectory = strcat(IMGpath,IMGname);
 img = imread(IMGdirectory);
 handles.seno=img;
-set(handles.saveSeno, 'Enable', 'on');
-set(handles.interpolPopUp, 'Enable', 'on');
-set(handles.filterPopUp, 'Enable', 'on');
-handles.typeInterpol = ' --- Interpolation Type ---';
-handles.typeFilter = ' --- Filter ---';
-axes(handles.axes2);
-imshow(img);
+setSenoConditions(hObject, handles);
+handles = guidata(hObject);
+% save=imread('savesave', 'jpg');
+% set(handles.saveSeno, 'Enable', 'on', 'cdata', save);
+% set(handles.interpolPopUp, 'Enable', 'on');
+% set(handles.filterPopUp, 'Enable', 'on');
+% set(handles.addNoise, 'Enable', 'on', 'Min', 0, 'Max', 100, 'Value', 0);
+% handles.noiseValue = 0;
+% handles.typeInterpol = ' --- Interpolation Type ---';
+% handles.typeFilter = ' --- Filter ---';
+handles.degreePasse=1;
 guidata(hObject, handles);
+noiseSeno(hObject, handles);
 
 % --- Executes on button press in importTest.
 function importTest_Callback(hObject, eventdata, handles)
 handles.degreePasse = 180/handles.projectionValue; %calcular a distância em graus entre projeçoes
-r = radon(handles.phantomTest, 0:handles.degreePasse:179);
+[degree, tr] = radon(handles.phantomTest, 0:handles.degreePasse:179);
+handles.seno=[degree, tr];
 %precisa da lista de todas as projecçoes, é preciso identificar as
 %projecçoes
 %no segundo argumento primeiro damos o intervalo e depois o passo
-set(handles.saveSeno, 'Enable', 'on');
-set(handles.interpolPopUp, 'Enable', 'on');
-set(handles.filterPopUp, 'Enable', 'on');
+setSenoConditions(hObject, handles);
+handles = guidata(hObject);
+% save=imread('savesave', 'jpg');
+% set(handles.saveSeno, 'Enable', 'on', 'cdata', save);
+% set(handles.interpolPopUp, 'Enable', 'on');
+% set(handles.filterPopUp, 'Enable', 'on');
+% set(handles.addNoise, 'Enable', 'on', 'Min', 0, 'Max', 100, 'Value', 0);
+% handles.noiseValue = 0;
+% handles.typeInterpol = ' --- Interpolation Type ---';
+% handles.typeFilter = ' --- Filter ---';
 guidata(hObject, handles);
-axes(handles.axes2);
-% xlabel('Parallel Rotation Angle - \theta (degrees)'); 
-% ylabel('Parallel Sensor Position - x\prime (pixels)');
-imshow(r);
+noiseSeno(hObject, handles)
 
 
 % --- Executes on button press in saveImg.
@@ -218,21 +242,15 @@ imwrite(handles.reconstructed,IMGdirectory); %guardamos a imagem reconstruída
 
 % --- Executes on button press in reconstructImg.
 function reconstructImg_Callback(hObject, eventdata, handles)
-handles.reconstructed = iradon(handles.seno, 1); %falta acrescentar o filtro e interpolação e o degreePasse
-set(handles.saveRecons, 'Enable', 'on'); %passamos a poder guardar a reconstrução
+handles.reconstructed = iradon(handles.seno, handles.degreePasse, handles.typeInterpol, handles.typeFilter); 
+%iradon(R,THETA,INTERPOLATION,FILTER,FREQUENCY_SCALING,OUTPUT_SIZE)
+%NONE NAO FUNCIONA
+save=imread('savesave', 'jpg');
+set(handles.saveRecons, 'Enable', 'on', 'cdata', save); %passamos a poder guardar a reconstrução
 axes(handles.axes5)
-imshow(handles.reconstructed);
+imshow(handles.reconstructed, 'InitialMagnification','fit');
 guidata(hObject, handles);
 
-function noise_Callback(hObject, eventdata, handles)
-handles.noiseValue = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function noise_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function projections_Callback(hObject, eventdata, handles)
 handles.projectionValue = str2double(get(hObject, 'String'));
@@ -243,3 +261,25 @@ function projections_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on slider movement.
+function addNoise_Callback(hObject, eventdata, handles)
+handles.noiseValue = round(get(hObject, 'Value')); %vamos buscar o valor do slider
+noise=num2str(handles.noiseValue); %convertemos em string para mostrar na text box
+str = strcat(noise, '%'); %concatenar strings
+set(handles.currentNoise, 'String', str); %definir string da textbox
+noiseSeno(hObject, handles) %imprimir  imagem
+guidata(hObject, handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function addNoise_CreateFcn(hObject, eventdata, handles)
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+function noiseSeno(hObject, handles)
+img = im2double(handles.seno) + handles.noiseValue*rand(size(handles.seno))/100;
+axes(handles.axes2)
+imshow(img, 'InitialMagnification','fit')
