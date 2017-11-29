@@ -75,6 +75,47 @@ varargout{1} = handles.output;
 
 % --- Executes on selection change in anatomyPopUp.
 function anatomyPopUp_Callback(hObject, eventdata, handles)
+handles.anatomicPart = get(hObject, 'Value');
+
+switch(handles.anatomicPart) %com o ficheiro do joelho e MRI do matlab, visualizar em 3D se possível acrescentar mais
+    case 1 %Joelho
+        
+    case 2 %Cabeça
+        load mri
+        colormap(map)
+        %aplica um filtro passa baixo a todo o volume
+        Ds = smooth3(D);
+        %cria a superficie externa do volume
+        hiso = patch(isosurface(Ds,5),...
+           'FaceColor',[1,.75,.65],...
+           'EdgeColor','none');
+           isonormals(Ds,hiso)
+        %define a imagem superior e inferior do volume
+        hcap = patch(isocaps(D,5),...
+           'FaceColor','interp',...
+           'EdgeColor','none');
+        %define o ângulo de visualização do volume
+        view(35,30) 
+        axis tight 
+        %define o fator de escala de cada um dos eixos para uma visualização mais
+        %realista
+
+
+
+        daspect([1,1,.4]);
+        %define as condições de iluminação de forma a se ter uma perspetiva 3D do
+        %volume
+        lightangle(45,30);
+        lighting gouraud
+        hcap.AmbientStrength = 0.6;
+        hiso.SpecularColorReflectance = 0;
+        hiso.SpecularExponent = 50;
+        
+end
+
+axes(handles.axes1);
+imshow(D);
+
 % hObject    handle to anatomyPopUp (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
