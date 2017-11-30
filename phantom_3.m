@@ -22,7 +22,7 @@ function varargout = phantom_3(varargin)
 
 % Edit the above text to modify the response to help phantom_3
 
-% Last Modified by GUIDE v2.5 29-Nov-2017 00:39:01
+% Last Modified by GUIDE v2.5 30-Nov-2017 12:27:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -76,12 +76,26 @@ varargout{1} = handles.output;
 % --- Executes on selection change in anatomyPopUp.
 function anatomyPopUp_Callback(hObject, eventdata, handles)
 handles.anatomicPart = get(hObject, 'Value');
+initialConditions(hObject, handles);
 
 switch(handles.anatomicPart) %com o ficheiro do joelho e MRI do matlab, visualizar em 3D se possível acrescentar mais
-    case 1 %Joelho
+    case 1 %vazio
         
-    case 2 %Cabeça
+    case 2 %Joelho 2D
+        [IMGname,IMGpath] = uigetfile({'*.tif'; '*.jpg'},'Select Image');
+        IMGdirectory = strcat(IMGpath,IMGname);
+        img = imread(IMGdirectory);
+        
+        axes(handles.axes1);
+        imshow(img);
+        
+    case 3 %Cabeça 3D
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %Lê os dados correspondentes a 27 slides de imagens de MRI com uma resolução
+        %de 128*128. Esses dados ficam disponíveis na matriz D.
         load mri
+        D=squeeze(D);
+        %matriz convertida para o formato double
         colormap(map)
         %aplica um filtro passa baixo a todo o volume
         Ds = smooth3(D);
@@ -110,19 +124,11 @@ switch(handles.anatomicPart) %com o ficheiro do joelho e MRI do matlab, visualiz
         hcap.AmbientStrength = 0.6;
         hiso.SpecularColorReflectance = 0;
         hiso.SpecularExponent = 50;
-        
 end
 
-axes(handles.axes1);
-imshow(D);
-
-% hObject    handle to anatomyPopUp (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns anatomyPopUp contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from anatomyPopUp
-
+%%%%%%%%%%%%%%%%%%%%%%
+%dúvida
+axes(handles.axes1); %por que não precisa de imshow?
 
 % --- Executes during object creation, after setting all properties.
 function anatomyPopUp_CreateFcn(hObject, eventdata, handles)
@@ -136,9 +142,14 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+function initialConditions(hObject, handles)
+set(handles.gamma,'Value', 1, 'Min', 0.3, 'Max', 3);
+set(handles.contrast, 'Value', 0);
+set(handles.brightness, 'Value', 0);
 
 % --- Executes on slider movement.
 function XSlider_Callback(hObject, eventdata, handles)
+handles.XsliderValue = get(hObject, 'Value');
 % hObject    handle to XSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -202,19 +213,47 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
+function my_adjust(hObject, handles)
+sliderBright = get(handles.brightness, 'Value');
+sliderContrast = get(handles.contrast, 'Value')/2;
+sliderGamma = get(handles.gamma, 'Value');
+
+%AJUSTE BRILHO
+if sliderBright>=0
+   img2 = imadjust(img,[0;1-sliderBright],[sliderBright;1]); %para aummentar brilho
+else
+   img2 = imadjust(img,[-sliderBright;1],[0;1+sliderBright]);
+end
+
+%AJUSTE CONTRASTE
+if sliderContrast>=0
+   img2 = imadjust(img2,[sliderContrast;1-sliderContrast],[0;1]); %para aummentar contraste
+else
+   img2 = imadjust(img2,[0;1],[-sliderContrast;1+sliderContrast]);
+end
+%AJUSTE GAMMA
+img2 = imadjust(img2,[],[],sliderGamma); 
+
+handles.img2save = img2; %Após o ajuste, criamos uma nova imagem para que possa ser guardada
+
+axes(handles.axes1);
+imshow(img2);
+
+guidata(hObject, handles);
+
+
 
 % --- Executes on slider movement.
 function brightness_Callback(hObject, eventdata, handles)
-% hObject    handle to brightness (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+my_adjust(hObject, handles);
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
 function brightness_CreateFcn(hObject, eventdata, handles)
+
 % hObject    handle to brightness (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -227,12 +266,10 @@ end
 
 % --- Executes on slider movement.
 function contrast_Callback(hObject, eventdata, handles)
-% hObject    handle to contrast (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+my_adjust(hObject, handles);
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -249,7 +286,27 @@ end
 
 % --- Executes on slider movement.
 function noise_Callback(hObject, eventdata, handles)
+my_adjust(hObject, handles);
+
+
+guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function noise_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to noise (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on slider movement.
+function gamma_Callback(hObject, eventdata, handles)
+% hObject    handle to gamma (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -258,8 +315,8 @@ function noise_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function noise_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to noise (see GCBO)
+function gamma_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gamma (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
